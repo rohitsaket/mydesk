@@ -2,7 +2,7 @@ import type { ViewKey } from "@/lib/hrms/types";
 import {
   LayoutDashboard, CalendarClock, CalendarDays, Plane, FileClock, ListChecks,
   Wallet, Receipt, FolderOpen, LifeBuoy, Target, Users, Settings, ClipboardCheck,
-  UserCheck, BriefcaseBusiness, Bell, UserRound,
+  UserCheck, BriefcaseBusiness, Bell, UserRound, BarChart3,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -15,6 +15,7 @@ export interface NavItem {
 
 export const MAIN_NAV: NavItem[] = [
   { key: "desk", label: "My Desk", icon: LayoutDashboard },
+  { key: "insights", label: "Insights", icon: BarChart3 },
   { key: "attendance", label: "Attendance", icon: CalendarClock },
   { key: "calendar", label: "My Calendar", icon: CalendarDays },
   { key: "leave", label: "Leave", icon: Plane },
@@ -42,7 +43,7 @@ export const MOBILE_NAV: NavItem[] = [
 ];
 
 export const VIEW_TITLES: Record<ViewKey, string> = {
-  desk: "My Desk", attendance: "Attendance", shifts: "Shifts", leave: "Leave",
+  desk: "My Desk", insights: "Insights", attendance: "Attendance", shifts: "Shifts", leave: "Leave",
   wfh: "Work From Home", onduty: "On Duty", tasks: "Tasks", timesheet: "Timesheet",
   calendar: "My Calendar", payroll: "Payroll", expenses: "Expenses", documents: "Documents",
   helpdesk: "Help Desk", requests: "Requests", approvals: "Approvals", team: "My Team",

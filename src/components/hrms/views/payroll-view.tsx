@@ -336,27 +336,30 @@ function PayslipDialog({ id, onClose }: { id: string; onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl" aria-describedby={undefined}>
+        <DialogHeader className="pb-0">
+          {query.data ? (
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Building2 className="h-4 w-4" />
+              </div>
+              <div>
+                <DialogTitle className="text-sm">{query.data.employee.company}</DialogTitle>
+                <p className="text-xs text-muted-foreground">
+                  Payslip — {monthLabel(query.data.payslip.month, query.data.payslip.year)}
+                </p>
+              </div>
+              <div className="ml-auto">
+                <StatusBadge status={query.data.payslip.status} label={query.data.payslip.status === "PAID" ? "Paid" : query.data.payslip.status} />
+              </div>
+            </div>
+          ) : (
+            <DialogTitle className="text-sm text-muted-foreground">Payslip</DialogTitle>
+          )}
+        </DialogHeader>
         <DataState query={query} skeleton={<PayslipSkeleton />} errorTitle="Could not load payslip">
           {(d) => (
             <>
-              <DialogHeader className="pb-0">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Building2 className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <DialogTitle className="text-sm">{d.employee.company}</DialogTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Payslip — {monthLabel(d.payslip.month, d.payslip.year)}
-                    </p>
-                  </div>
-                  <div className="ml-auto">
-                    <StatusBadge status={d.payslip.status} label={d.payslip.status === "PAID" ? "Paid" : d.payslip.status} />
-                  </div>
-                </div>
-              </DialogHeader>
-
               <div className="max-h-[62vh] overflow-y-auto scroll-thin pr-1">
                 {/* employee block */}
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 rounded-lg border border-border bg-muted/30 p-3 sm:grid-cols-2">

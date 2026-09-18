@@ -1,7 +1,7 @@
 // Shared HRMS types used by both client and server.
 
 export type ViewKey =
-  | "desk" | "attendance" | "shifts" | "leave" | "wfh" | "onduty"
+  | "desk" | "insights" | "attendance" | "shifts" | "leave" | "wfh" | "onduty"
   | "tasks" | "timesheet" | "calendar" | "payroll" | "expenses"
   | "documents" | "helpdesk" | "requests" | "approvals" | "team"
   | "directory" | "performance" | "notifications" | "profile" | "settings";
@@ -248,4 +248,37 @@ export interface ApiEnvelope<T> {
   success: boolean;
   data?: T;
   error?: { code: string; message: string };
+}
+
+// ── Insights (personal analytics) ─────────────────────
+export interface InsightsPayload {
+  period: { from: string; to: string };
+  attendance: {
+    trend: { date: string; label: string; hours: number; ot: number; status: string | null }[];
+    distribution: { status: string; count: number }[];
+    punctuality: {
+      onTimeRate: number;
+      avgLateMinutes: number;
+      medianArrival: string | null;
+      earlyExits: number;
+      punchedDays: number;
+    };
+    streak: number;
+    totals: { workedDays: number; avgHours: number; overtimeHours: number };
+  };
+  tasks: {
+    weekly: { week: string; created: number; completed: number }[];
+    summary: { total: number; completed: number; open: number; overdue: number; completionRate: number };
+  };
+  timesheet: {
+    projects: { name: string; hours: number; billable: number }[];
+    totalHours: number;
+    billableRate: number;
+  };
+  leave: {
+    balances: { name: string; color: string; entitled: number; used: number; pending: number; available: number }[];
+    totalAvailable: number;
+  };
+  payroll: { trend: { label: string; net: number }[]; avgNet: number };
+  highlights: { tone: "success" | "warning" | "danger" | "info"; text: string }[];
 }

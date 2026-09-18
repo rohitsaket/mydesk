@@ -217,3 +217,28 @@ Unresolved / Notes for next phase:
 - Consider prisma migration for widgetPrefs raw-SQL column (settings notifPrefs).
 - Sandbox-crossing-midnight: attendance engine auto-creates new day rows (already handled by getOrCreateDay).
 - Recurring 15-min webDevReview cron created to continue QA + feature polish autonomously.
+
+---
+Task ID: 13 (webDevReview round 1)
+Agent: main (Z.ai Code)
+Task: Scheduled review — QA sweep, a11y fix, NEW Insights analytics module (API + view + nav).
+
+Work Log:
+- QA: app stable post-release; dev server had crashed mid-session (stale module-not-found from a transient broken file state) — restarted via setsid .zscripts/dev.sh (survives shell exit; plain nohup got reaped).
+- FIXED Radix a11y warnings (documented since v1.0): payslip DialogContent now always renders a DialogTitle (placeholder while loading, real header when loaded) + aria-describedby={undefined}; verified in browser — payslip dialog opens with ZERO console warnings (was: "requires DialogTitle" + "Missing Description").
+- NEW MODULE — Insights (personal analytics): 
+  - API GET /api/insights (getAuth-scoped, IDOR-safe): last-30-day attendance trend (worked hours/OT per day), status distribution, punctuality (on-time %, avg late, median arrival IST, early exits), attendance streak (skips WO/H), task throughput (6 ISO weeks created vs completed + overdue), timesheet by project (6 weeks, hours + billable split), leave balances (typed colors, available/entitled), payroll trend (last 3 payslips via period relation — Prisma relation orderBy needs ARRAY form [{period:{year}},{period:{month}}]), and auto-generated highlights with tones.
+  - View insights-view.tsx: 4 StatCards (On-Time %, Avg Workday, Streak, Tasks Completed), gradient accent rule, recharts AreaChart (worked hours, gradient fill, 8.5h shift ReferenceLine), 2 donuts (attendance mix + leave balance with center totals), BarChart (task throughput), animated project bars (billable segment solid + non-billable 30% opacity), net pay trend (₹ INR formatting), highlights grid + 4 micro-stats; staggered animate-in entrances (tw-animate-css).
+  - Wired: ViewKey "insights" + InsightsPayload types, MAIN_NAV position 2 (BarChart3 icon), VIEW_TITLES (auto: sidebar + bottom-nav More sheet + ⌘K palette), app-shell dynamic import.
+- GOTCHAS SOLVED (conventions for future agents): (1) recharts 2.15.4 + React 19 types break next/dynamic LoaderComponent inference — import recharts modules via `dynamic(() => import(...).then((m) => m.NamedExport))`; (2) a file with unbalanced backticks (template literal) makes tsc report confusing syntax errors at LATER lines — audit with `src.count(chr(96)) % 2`; (3) framer-motion v12 imports ALSO poison dynamic() module typing in this setup — prefer tw-animate-css classes (animate-in fade-in slide-in-from-bottom-2 + animationDelay inline style).
+- QA (browser): login → Insights renders all 7 sections with real data (57% on-time, 7.8h avg, 18P/4WO/4L mix, ₹77.9k/₹75.6k pay trend, 3 auto-highlights); 5 recharts wrappers (2 areas, 2 pies, 12 bars, refline) verified via DOM count; VLM visual review of light+dark screenshots: "no overlapping/cut-off/broken areas, harmonious palette, well-optimized dark mode"; mobile 390px zero overflow; desk/tasks regression pass; console + page errors CLEAN.
+- bunx tsc --noEmit: 0 app errors (only pre-existing examples/ + skills/ scaffold). bun run lint: passes.
+
+Stage Summary:
+- App now has 21 views / 41 API route groups. Insights module = flagship premium analytics feature, fully theme-adaptive (charts use CSS var tokens).
+- Radix a11y warnings RESOLVED (last known cosmetic issue from v1.0).
+
+Unresolved / Notes for next phase:
+- Consider adding insights deep-link from desk (e.g. "View insights" button on a desk stat card).
+- Punctuality insight for demo user shows 57% — consider seeding slightly better data or an explanatory hint (median arrival 9:40 AM vs 9:30 shift).
+- Widget prefs (notifPrefs) still raw-SQL column; prisma migration pending (low priority).

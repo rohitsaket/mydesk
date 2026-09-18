@@ -10,6 +10,7 @@ import { DataSkeleton } from "@/components/hrms/shared";
 
 const loading = () => <DataSkeleton />;
 
+const InsightsView = dynamic(() => import("../views/insights-view").then((m) => m.InsightsView), { loading });
 const AttendanceView = dynamic(() => import("../views/attendance-view"), { loading });
 const ShiftsView = dynamic(() => import("../views/shifts-view"), { loading });
 const LeaveView = dynamic(() => import("../views/leave-view"), { loading });
@@ -41,6 +42,7 @@ export function AppShell() {
         <main className="flex min-w-0 flex-1 flex-col pb-20 md:pb-0" role="main">
           <div className="mx-auto w-full max-w-[1440px] flex-1 space-y-4 p-3 sm:space-y-5 sm:p-4 lg:p-6">
             {view === "desk" ? <DeskView /> : null}
+            {view === "insights" ? <InsightsView /> : null}
             {view === "attendance" ? <AttendanceView /> : null}
             {view === "shifts" ? <ShiftsView /> : null}
             {view === "leave" ? <LeaveView /> : null}
