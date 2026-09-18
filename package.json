@@ -1,6 +1,7 @@
 {
-  "name": "nextjs_tailwind_shadcn_ts",
-  "version": "0.2.1",
+  "name": "mydesk-hrms",
+  "version": "1.0.0",
+  "description": "My Desk — a premium enterprise employee self-service HRMS built with Next.js 16, TypeScript, Prisma and shadcn/ui.",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
@@ -10,7 +11,9 @@
     "db:push": "prisma db push --accept-data-loss",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:reset": "prisma migrate reset"
+    "db:reset": "prisma migrate reset",
+    "db:seed": "bun prisma/seed.ts",
+    "setup": "cp -n .env.example .env 2>/dev/null; bun install && bun run db:generate && bun run db:push && bun run db:seed"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
