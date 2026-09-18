@@ -681,6 +681,8 @@ async function main() {
   // ── notifications (Rohit) ───────────────────────────────────
   const notifs = [
     { title: "Attendance regularization required", body: "Yesterday's attendance is missing a checkout punch. Regularize to avoid LOP.", type: "ATTENDANCE", link: "attendance", read: false, at: -2 },
+    { title: "Document expired: Group Mediclaim Policy Card", body: "This policy lapsed 12 days ago. Raise a helpdesk ticket to HR to get it reissued.", type: "DOCUMENT", link: "documents", read: false, at: -30 },
+    { title: "Employee ID Card expires in 24 days", body: "Renew with HR before the deadline to avoid building-access issues.", type: "DOCUMENT", link: "documents", read: false, at: -30.5 },
     { title: "New announcement: Information Security Policy", body: "Critical policy update requires your acknowledgement.", type: "ANNOUNCEMENT", link: "desk", read: false, at: -12 },
     { title: "Task assigned: Verify payroll data before cut-off", body: "Payal Mehta assigned you an urgent task due today 06:00 PM.", type: "TASK", link: "tasks", read: false, at: -5 },
     { title: "Leave request LR-1071 rejected", body: "Anita Desai: Release crunch this sprint, please re-plan.", type: "LEAVE", link: "leave", read: true, at: -192 },

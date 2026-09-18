@@ -16,6 +16,7 @@ import {
   Coffee, Gauge, Gift, Laptop, Megaphone, Plane, PlaneTakeoff, Receipt,
   Timer, TrendingUp, UserCheck, AlertTriangle, BriefcaseBusiness, FileClock,
   LifeBuoy, BadgeCheck, PartyPopper, CalendarClock, ClipboardCheck, BarChart3,
+  CircleAlert,
 } from "lucide-react";
 import type { ViewKey } from "@/lib/hrms/types";
 
@@ -558,25 +559,56 @@ function ClipboardIcon() {
 }
 
 // ── Warning banners ──────────────────────────────────────────
+const BANNER_TONES = {
+  warning: {
+    wrap: "border-warning/30 bg-warning-soft",
+    icon: "text-warning",
+    title: "text-[#B54708]",
+    message: "text-[#B54708]/80",
+    action: "border-warning/40 text-[#B54708] hover:bg-warning-soft/70",
+  },
+  danger: {
+    wrap: "border-danger/30 bg-danger-soft",
+    icon: "text-danger",
+    title: "text-[#A32424] dark:text-[#F87171]",
+    message: "text-[#A32424]/85 dark:text-[#F87171]/85",
+    action: "border-danger/40 text-[#A32424] hover:bg-danger-soft/70 dark:text-[#F87171] dark:hover:bg-danger-soft/60",
+  },
+} as const;
+
 export function WarningBanners({ data }: { data: DeskPayload }) {
   const navigate = useHrmsStore((s) => s.navigate);
   if (data.warnings.length === 0) return null;
   return (
     <div className="space-y-2.5">
-      {data.warnings.map((w) => (
-        <div key={w.id} className="flex flex-col gap-2.5 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-2.5">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-            <div>
-              <p className="text-sm font-semibold text-[#B54708]">{w.title}</p>
-              <p className="text-xs text-[#B54708]/80">{w.message}</p>
+      {data.warnings.map((w) => {
+        const tone = BANNER_TONES[w.tone ?? "warning"];
+        const Icon = w.tone === "danger" ? CircleAlert : AlertTriangle;
+        return (
+          <div
+            key={w.id}
+            className={cn(
+              "flex animate-in fade-in slide-in-from-top-1 flex-col gap-2.5 rounded-xl border px-4 py-3 duration-300 sm:flex-row sm:items-center sm:justify-between",
+              tone.wrap
+            )}
+          >
+            <div className="flex items-start gap-2.5">
+              <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", tone.icon)} />
+              <div>
+                <p className={cn("text-sm font-semibold", tone.title)}>{w.title}</p>
+                <p className={cn("text-xs", tone.message)}>{w.message}</p>
+              </div>
             </div>
+            <Button
+              size="sm" variant="outline"
+              className={cn("shrink-0 gap-1.5", tone.action)}
+              onClick={() => navigate(w.link as ViewKey)}
+            >
+              {w.link === "documents" ? "Review" : "Fix Now"} <ChevronRight className="h-3 w-3" />
+            </Button>
           </div>
-          <Button size="sm" variant="outline" className="shrink-0 gap-1.5 border-warning/40 text-[#B54708] hover:bg-warning-soft/70" onClick={() => navigate(w.link as ViewKey)}>
-            Fix Now <ChevronRight className="h-3 w-3" />
-          </Button>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

@@ -234,7 +234,7 @@ export interface DeskPayload {
   nextHoliday: HolidayItem | null;
   birthdays: { id: string; name: string; designation: string; type: "BIRTHDAY" | "ANNIVERSARY"; detail: string; isToday: boolean }[];
   assets: { name: string; code: string }[];
-  warnings: { id: string; title: string; message: string; link: string }[];
+  warnings: { id: string; title: string; message: string; link: string; tone?: "warning" | "danger" }[];
   managerWidgets: ManagerWidgets | null;
   pendingRequests: { leave: number; wfh: number; onDuty: number; regularizations: number; tickets: number };
 }

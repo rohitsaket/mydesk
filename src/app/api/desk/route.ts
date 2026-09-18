@@ -237,6 +237,36 @@ export async function GET() {
       });
     }
 
+    // ── document expiry (expired or expiring within 30 days) ──
+    const expiryHorizon = addDays(today, 30);
+    const expiringDocs = await db.document.findMany({
+      where: {
+        employeeId: emp.id,
+        expiresAt: { lte: expiryHorizon },
+      },
+      orderBy: { expiresAt: "asc" },
+      take: 3,
+    });
+    if (expiringDocs.length > 0) {
+      const expired = expiringDocs.filter((d) => d.expiresAt! <= today);
+      const soon = expiringDocs.filter((d) => d.expiresAt! > today);
+      const nearest = expiringDocs[0];
+      const daysLeft = Math.ceil((nearest.expiresAt!.getTime() - today.getTime()) / 86_400_000);
+      warnings.push({
+        id: "document-expiry",
+        tone: expired.length > 0 ? "danger" : "warning",
+        title: expired.length > 0
+          ? `${expired.length + soon.length} document${expired.length + soon.length === 1 ? "" : "s"} need${expired.length + soon.length === 1 ? "s" : ""} attention`
+          : daysLeft === 0
+            ? `${nearest.name} expires today`
+            : `${nearest.name} expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`,
+        message: expired.length > 0
+          ? `${expired.length} expired (${expired.map((d) => d.name.split(" ")[0]).slice(0, 2).join(", ")})${soon.length > 0 ? ` · ${soon.length} expiring soon` : ""} — review and renew with HR.`
+          : "Check the expiry date and renew with HR before it lapses.",
+        link: "documents",
+      });
+    }
+
     // ── pending own requests counts ──
     const [pendLeave, pendWfh, pendOd, pendReg, pendTickets] = await Promise.all([
       db.leaveRequest.count({ where: { employeeId: emp.id, status: "PENDING" } }),

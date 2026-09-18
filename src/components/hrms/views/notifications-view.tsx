@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Bell, Plane, CalendarClock, IndianRupee, ListTodo, Megaphone, Receipt,
-  ClipboardCheck, Clock, ChevronRight, CheckCheck, Loader2,
+  ClipboardCheck, Clock, ChevronRight, CheckCheck, Loader2, FileBadge,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,10 +43,11 @@ const TYPE_META: Record<string, { label: string; icon: LucideIcon; color: string
   EXPENSE: { label: "Expense", icon: Receipt, color: "#8B5CF6" },
   APPROVAL: { label: "Approval", icon: ClipboardCheck, color: "#06B6D4" },
   SHIFT: { label: "Shift", icon: Clock, color: "#F97316" },
+  DOCUMENT: { label: "Document", icon: FileBadge, color: "#14B8A6" },
   SYSTEM: { label: "System", icon: Bell, color: "#64748B" },
 };
 
-const FILTER_TYPES = ["LEAVE", "ATTENDANCE", "PAYROLL", "TASK", "ANNOUNCEMENT", "EXPENSE", "APPROVAL"] as const;
+const FILTER_TYPES = ["LEAVE", "ATTENDANCE", "PAYROLL", "TASK", "ANNOUNCEMENT", "EXPENSE", "APPROVAL", "DOCUMENT"] as const;
 
 function typeMeta(type: string): { label: string; icon: LucideIcon; color: string } {
   return TYPE_META[type] ?? { label: type.replace(/_/g, " "), icon: Bell, color: "#64748B" };

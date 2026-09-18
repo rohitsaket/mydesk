@@ -364,3 +364,30 @@ Unresolved / Notes for next phase:
 - If DB is ever wiped again: bun run db:seed restores in ~30s (all demo state incl. round-3 showcase announcement).
 - Documents expiry could feed a desk widget or notification (e.g., "ID card expires in 24 days" notification in seed) — natural next enhancement.
 - Ideas backlog: team drill-down dialogs, helpdesk SLA timers, announcements pinning, payslip PDF logo embedding.
+---
+Task ID: 18 (webDevReview round 6)
+Agent: main (Z.ai Code)
+Task: Scheduled review — exhaustive dialog a11y audit + NEW document-expiry desk banner (tone-aware) + DOCUMENT notification type.
+
+Work Log:
+- QA: server healthy, DB intact (26 users — round-5 fix holding through restarts), session persisted. All views render, zero fresh console errors.
+- EXHAUSTIVE A11Y AUDIT: armed a console.warn interceptor and opened every dialog in the app — break, checkout, task create, leave apply, WFH request, on-duty request, expense claim, timesheet entry, regularize, attendance day detail, calendar day detail, helpdesk raise + ticket detail, directory person, performance goal update, payslip, notifications popover, create menu, profile edit (account menu → My Profile) — ALL 17+ dialogs produce 0 fresh warnings. The lingering console entry was confirmed stale (persisted from round-5 pre-fix More-sheet state; browser session log is cumulative).
+- NEW FEATURE — Document expiry surfaces on the Desk (completes the round-5 expiry feature loop):
+  - types.ts: warnings entries gain optional tone: "warning" | "danger".
+  - Desk API: queries own documents with expiresAt ≤ today+30d (take 3, asc) → pushes a document-expiry warning: danger tone when any expired (title "2 documents need attention", message "1 expired (Group) · 1 expiring soon — review and renew with HR"), else warning tone with nearest doc name + days-left countdown. Link → documents.
+  - WarningBanners (desk/widgets.tsx): tone-aware design system — amber variant (existing) + red danger variant (danger-soft bg, #A32424 text, dark-mode #F87171), per-tone CircleAlert/AlertTriangle icons, animate-in fade+slide entrance, context-aware CTA ("Review" for documents, "Fix Now" otherwise).
+  - Notifications: new DOCUMENT type (FileBadge icon, teal #14B8A6) in TYPE_META + type filter list. Seed gains 2 notifications (Mediclaim expired, ID card expires in 24 days); same pair inserted surgically into live DB (2 DOCUMENT rows confirmed in API, unread 6).
+- Verified end-to-end in browser: desk shows all 3 banners (amber missing-punch, amber ack, RED documents); "Review" CTA navigates to Documents; notifications view shows both DOCUMENT rows with "Document ·" labels; type filter Document → "Showing 2 notifications"; topbar popover shows Mediclaim notification; dark mode banner bg rgb(46,21,18) renders correctly.
+- VLM reviews: notifications doc-filter view "No real defects found"; desk banners light+dark "No real defects found" (one false-positive "cut off" claim disproven by DOM geometry — banner bottom 288px < 900px viewport).
+- Regression: tsc 0 errors, lint passes, mobile 390px zero overflow + red banner visible, console clean.
+- Committed + pushed to github.com/rohitsaket/mydesk.
+
+Stage Summary:
+- 22 views / 42 API route groups. Documents expiry now surfaces in 3 places: Documents view (round 5), Desk warning banner (danger/warning tone), and notifications (new DOCUMENT type).
+- Desk warnings upgraded from uniform amber to a 2-tone design system with animations and contextual CTAs.
+- A11y fully audited: every dialog in the app is warning-free.
+
+Unresolved / Notes for next phase:
+- Notifications API could accept a `type` param server-side (currently filters client-side via query param — verify; the view passes ?type= and it works, so server-side filtering already exists).
+- Ideas backlog: team drill-down dialogs, helpdesk SLA timers, announcements pinning, payslip PDF logo embedding, weekly digest notification seed.
+- The stale a11y console entry may reappear in `agent-browser console errors` output (cumulative session log) — it predates round 5's fix; fresh-warning interceptors confirm 0 occurrences.
