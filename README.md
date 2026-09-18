@@ -20,7 +20,7 @@ Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · shadcn/u
 | **Expenses** | Category claims with receipt metadata, Manager → Finance → Paid lifecycle |
 | **Documents** | Personal + company-wide document vault with confidentiality levels and **expiry alerts** (expired/expiring-soon banners, urgency sort, renewal guidance) |
 | **Calendar** | Month grid merging meetings, trainings, company events, holidays, leaves, task due dates, payroll days, birthdays & anniversaries |
-| **Helpdesk** | HR/IT/Facilities/Payroll/Admin tickets with priorities and comment threads |
+| **Helpdesk** | HR/IT/Facilities/Payroll/Admin tickets with priorities, comment threads, and **first-response SLA tracking** — per-priority targets (Urgent 4h → Low 3 days), live countdown chips, breach/at-risk badges, urgency sorting, and SLA stats (met rate, avg response) |
 | **Performance** | Quarterly goals with progress tracking, auto-completion at target, self-review |
 | **Manager center** | Team-today live board, approvals inbox (5 tabs) with single/batch decisions, every decision audited & notified |
 | **Directory & profile** | Searchable people directory, self-service profile with restricted-field guards, masked bank/PAN data |

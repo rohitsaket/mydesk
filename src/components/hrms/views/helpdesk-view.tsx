@@ -33,7 +33,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   LifeBuoy, Plus, MessagesSquare, Send, Clock, CircleCheck, Headset, UserRound,
+  Timer, TimerReset, AlarmClockOff, Gauge,
 } from "lucide-react";
+import {
+  slaState, slaCountdownLabel, slaResponseLabel, fmtDurationMs,
+  SLA_TARGET_LABELS,
+  type SlaState, type SlaSummary,
+} from "@/lib/hrms/sla";
+import { fmtTime12 } from "@/lib/hrms/time";
 
 // ── types (API contract) ─────────────────────────────────────
 interface TicketComment {
@@ -54,10 +61,13 @@ interface TicketItem {
   comments: TicketComment[];
   createdAt: string;
   updatedAt: string;
+  slaDueAt: string;
+  firstResponseAt: string | null;
 }
 
 interface TicketsPayload {
   items: TicketItem[];
+  summary?: SlaSummary;
 }
 
 // ── constants ────────────────────────────────────────────────
@@ -79,10 +89,10 @@ const CREATE_CATEGORIES = [
 ] as const;
 
 const PRIORITY_OPTIONS = [
-  { value: "LOW", label: "Low" },
-  { value: "NORMAL", label: "Normal" },
-  { value: "HIGH", label: "High" },
-  { value: "URGENT", label: "Urgent" },
+  { value: "LOW", label: "Low", sla: "3 days" },
+  { value: "NORMAL", label: "Normal", sla: "2 business days" },
+  { value: "HIGH", label: "High", sla: "8 hours" },
+  { value: "URGENT", label: "Urgent", sla: "4 hours" },
 ] as const;
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -90,6 +100,48 @@ const PRIORITY_LABELS: Record<string, string> = {
 };
 
 const OPEN_STATUSES = ["OPEN", "IN_PROGRESS"];
+
+/** Live clock — re-renders consumers every `intervalMs` (default 30s) for countdowns. */
+function useNow(intervalMs = 30000): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now;
+}
+
+const SLA_CHIP_STYLES: Record<SlaState["status"], { className: string; icon: typeof Timer }> = {
+  ON_TRACK: { className: "border-border bg-muted/60 text-muted-foreground", icon: Timer },
+  AT_RISK: { className: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400", icon: TimerReset },
+  BREACHED: { className: "border-danger/30 bg-danger-soft text-danger", icon: AlarmClockOff },
+  MET: { className: "border-success/25 bg-success-soft text-success", icon: CircleCheck },
+  MISSED: { className: "border-danger/25 bg-danger-soft/70 text-danger dark:text-red-400", icon: AlarmClockOff },
+};
+
+/** Compact live SLA chip for ticket cards. */
+function SlaChip({ ticket: t, now }: { ticket: TicketItem; now: number }) {
+  const state = slaState(
+    { priority: t.priority, createdAt: t.createdAt, firstResponseAt: t.firstResponseAt },
+    new Date(now),
+  );
+  const meta = SLA_CHIP_STYLES[state.status];
+  const Icon = meta.icon;
+  const label = state.remainingMs != null ? slaCountdownLabel(state) : slaResponseLabel(state);
+  return (
+    <span
+      title={`First response target: ${SLA_TARGET_LABELS[t.priority] ?? SLA_TARGET_LABELS.NORMAL}`}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-md border px-1.5 py-0 text-[11px] font-medium",
+        meta.className,
+        state.status === "AT_RISK" && "animate-pulse",
+      )}
+    >
+      <Icon className="h-3 w-3" />
+      <span className="tabular whitespace-nowrap">{label}</span>
+    </span>
+  );
+}
 
 function CategoryBadge({ category }: { category: string }) {
   const meta = CATEGORY_META[category] ?? CATEGORY_META.HR;
@@ -104,6 +156,7 @@ function CategoryBadge({ category }: { category: string }) {
 export default function HelpdeskView() {
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const now = useNow(30000);
 
   // auto-open create dialog when navigated with a form trigger (e.g. quick create)
   const openForm = useHrmsStore((s) => s.openForm);
@@ -120,7 +173,20 @@ export default function HelpdeskView() {
 
   const query = useQuery({ queryKey: ["hr-tickets"], queryFn: () => apiGet<TicketsPayload>("/api/hr-tickets") });
   const items = query.data?.items ?? [];
+  const summary = query.data?.summary;
   const selected = selectedId ? items.find((t) => t.id === selectedId) ?? null : null;
+
+  // Open tickets sorted by SLA urgency: breached → at-risk → on-track (soonest due first) → responded
+  const urgencyRank = (t: TicketItem): number => {
+    const s = slaState({ priority: t.priority, createdAt: t.createdAt, firstResponseAt: t.firstResponseAt }, new Date(now));
+    if (s.status === "BREACHED") return 0;
+    if (s.status === "AT_RISK") return 1;
+    if (s.status === "ON_TRACK") return 2;
+    return 3;
+  };
+  const openTickets = items
+    .filter((t) => OPEN_STATUSES.includes(t.status))
+    .sort((a, b) => urgencyRank(a) - urgencyRank(b) || a.slaDueAt.localeCompare(b.slaDueAt));
 
   return (
     <div className="space-y-4">
@@ -140,8 +206,30 @@ export default function HelpdeskView() {
       <DataState query={query} skeleton={<DataSkeleton />}>
         {() => (
           <>
-            <SectionCard title={`Open Tickets (${items.filter((t) => OPEN_STATUSES.includes(t.status)).length})`} icon={<Headset className="h-3.5 w-3.5 text-primary" />}>
-              {items.filter((t) => OPEN_STATUSES.includes(t.status)).length === 0 ? (
+            <SectionCard
+              title={`Open Tickets (${openTickets.length})`}
+              icon={<Headset className="h-3.5 w-3.5 text-primary" />}
+              action={
+                summary && (summary.breached > 0 || summary.atRisk > 0 || summary.metRatePct != null) ? (
+                  <span className="flex flex-wrap items-center justify-end gap-1.5">
+                    {summary.breached > 0 ? (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-danger/30 bg-danger-soft px-1.5 py-0 text-[11px] font-medium text-danger">
+                        <AlarmClockOff className="h-3 w-3" /> {summary.breached} breached
+                      </span>
+                    ) : null}
+                    {summary.atRisk > 0 ? (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                        <TimerReset className="h-3 w-3" /> {summary.atRisk} due soon
+                      </span>
+                    ) : null}
+                    {summary.metRatePct != null ? (
+                      <span className="text-[11px] text-muted-foreground">{summary.metRatePct}% responses in SLA</span>
+                    ) : null}
+                  </span>
+                ) : undefined
+              }
+            >
+              {openTickets.length === 0 ? (
                 <EmptyState
                   title="No open tickets"
                   message="All clear. Raise a ticket if you need HR, IT, payroll or facilities help."
@@ -153,11 +241,9 @@ export default function HelpdeskView() {
                 />
               ) : (
                 <div className="space-y-2">
-                  {items
-                    .filter((t) => OPEN_STATUSES.includes(t.status))
-                    .map((t) => (
-                      <TicketCard key={t.id} ticket={t} onClick={() => setSelectedId(t.id)} />
-                    ))}
+                  {openTickets.map((t) => (
+                    <TicketCard key={t.id} ticket={t} now={now} onClick={() => setSelectedId(t.id)} />
+                  ))}
                 </div>
               )}
             </SectionCard>
@@ -170,7 +256,7 @@ export default function HelpdeskView() {
                   {items
                     .filter((t) => !OPEN_STATUSES.includes(t.status))
                     .map((t) => (
-                      <TicketCard key={t.id} ticket={t} onClick={() => setSelectedId(t.id)} />
+                      <TicketCard key={t.id} ticket={t} now={now} onClick={() => setSelectedId(t.id)} />
                     ))}
                 </div>
               )}
@@ -180,7 +266,7 @@ export default function HelpdeskView() {
       </DataState>
 
       {selected ? (
-        <TicketDialog ticket={selected} onClose={() => setSelectedId(null)} />
+        <TicketDialog ticket={selected} now={now} onClose={() => setSelectedId(null)} />
       ) : null}
 
       <CreateTicketDialog open={createOpen} onOpenChange={setCreateOpen} />
@@ -212,7 +298,20 @@ function FaqCard() {
             <span className="font-medium text-foreground">Documents</span> for download.
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="faq-3" className="border-b-0">
+        <AccordionItem value="faq-3" className="border-border">
+          <AccordionTrigger className="py-2.5 text-left text-sm font-medium hover:no-underline">
+            What are the response SLAs?
+          </AccordionTrigger>
+          <AccordionContent className="text-xs leading-relaxed text-muted-foreground">
+            Every ticket carries a first-response SLA based on priority —{" "}
+            <span className="font-medium text-foreground">Urgent 4 hours</span>,{" "}
+            <span className="font-medium text-foreground">High 8 hours</span>,{" "}
+            <span className="font-medium text-foreground">Normal 2 business days</span> and{" "}
+            <span className="font-medium text-foreground">Low 3 days</span>. Open tickets show a live countdown; overdue
+            tickets are flagged red and escalated to the assigned team.
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="faq-4" className="border-b-0">
           <AccordionTrigger className="py-2.5 text-left text-sm font-medium hover:no-underline">
             How to claim expenses?
           </AccordionTrigger>
@@ -228,10 +327,22 @@ function FaqCard() {
 }
 
 // ── ticket card ──────────────────────────────────────────────
-function TicketCard({ ticket: t, onClick }: { ticket: TicketItem; onClick: () => void }) {
+function TicketCard({ ticket: t, now, onClick }: { ticket: TicketItem; now: number; onClick: () => void }) {
+  const sla = slaState({ priority: t.priority, createdAt: t.createdAt, firstResponseAt: t.firstResponseAt }, new Date(now));
+  const open = OPEN_STATUSES.includes(t.status);
+  const breached = open && sla.status === "BREACHED";
+  const atRisk = open && sla.status === "AT_RISK";
+
   return (
     <button
-      className="w-full rounded-xl border border-border bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-accent/40"
+      className={cn(
+        "group w-full rounded-xl border bg-card p-3 text-left shadow-sm transition-all hover:-translate-y-px hover:shadow-md",
+        breached
+          ? "border-danger/40 hover:border-danger/60"
+          : atRisk
+            ? "border-amber-500/35 hover:border-amber-500/55"
+            : "border-border hover:border-primary/40",
+      )}
       onClick={onClick}
     >
       <div className="flex flex-wrap items-center gap-1.5">
@@ -239,6 +350,7 @@ function TicketCard({ ticket: t, onClick }: { ticket: TicketItem; onClick: () =>
         <CategoryBadge category={t.category} />
         <PriorityBadge priority={t.priority === "NORMAL" ? "NORMAL" : t.priority} label={PRIORITY_LABELS[t.priority] ?? t.priority} />
         <StatusBadge status={t.status} label={t.status === "IN_PROGRESS" ? "In Progress" : undefined} />
+        <SlaChip ticket={t} now={now} />
       </div>
       <p className="mt-1.5 text-sm font-medium text-foreground">{t.subject}</p>
       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
@@ -255,8 +367,83 @@ function TicketCard({ ticket: t, onClick }: { ticket: TicketItem; onClick: () =>
   );
 }
 
+// ── SLA detail panel (dialog) ───────────────────────────────
+function SlaPanel({ ticket: t, now }: { ticket: TicketItem; now: number }) {
+  const sla = slaState({ priority: t.priority, createdAt: t.createdAt, firstResponseAt: t.firstResponseAt }, new Date(now));
+  const targetMs = sla.targetHours * 3600000;
+  const label = SLA_TARGET_LABELS[t.priority] ?? SLA_TARGET_LABELS.NORMAL;
+
+  // pending: elapsed progress toward due (capped for display)
+  if (sla.remainingMs != null) {
+    const overdue = sla.remainingMs < 0;
+    const elapsedMs = targetMs - sla.remainingMs;
+    const pct = Math.min(100, Math.round((elapsedMs / targetMs) * 100));
+    const barColor = overdue ? "bg-danger" : sla.status === "AT_RISK" ? "bg-amber-500" : "bg-primary";
+    return (
+      <div
+        className={cn(
+          "rounded-lg border p-3",
+          overdue
+            ? "border-danger/30 bg-danger-soft/50"
+            : sla.status === "AT_RISK"
+              ? "border-amber-500/30 bg-amber-500/5"
+              : "border-border bg-muted/30",
+        )}
+        role="status"
+        aria-label="First response SLA"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <p className={cn("flex items-center gap-1.5 text-xs font-semibold", overdue ? "text-danger" : sla.status === "AT_RISK" ? "text-amber-600 dark:text-amber-400" : "text-foreground")}>
+            <Gauge className="h-3.5 w-3.5" /> First response SLA — {label} target
+          </p>
+          <p className={cn("tabular text-sm font-semibold", overdue ? "text-danger" : sla.status === "AT_RISK" ? "text-amber-600 dark:text-amber-400" : "text-foreground")}>
+            {slaCountdownLabel(sla)}
+          </p>
+        </div>
+        {/* progress track */}
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden>
+          <div
+            className={cn("h-full rounded-full transition-all duration-500", barColor, sla.status === "AT_RISK" && "animate-pulse")}
+            style={{ width: `${overdue ? 100 : pct}%` }}
+          />
+        </div>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">
+          {overdue ? (
+            <>Response overdue — {t.assignee ?? "the support team"} has been notified. Escalate with a reply if it stays unattended.</>
+          ) : (
+            <>Due by {fmtDate(t.slaDueAt)} · {fmtTime12(t.slaDueAt)} — awaiting first response from {t.assignee ?? "the support team"}.</>
+          )}
+        </p>
+      </div>
+    );
+  }
+
+  // responded: response time vs target
+  const respondedInH = (sla.respondedInMs ?? 0) / 3600000;
+  const withinSla = sla.status === "MET";
+  return (
+    <div
+      className={cn("rounded-lg border p-3", withinSla ? "border-success/25 bg-success-soft/40" : "border-danger/25 bg-danger-soft/40")}
+      role="status"
+      aria-label="First response SLA result"
+    >
+      <p className={cn("flex items-center gap-1.5 text-xs font-semibold", withinSla ? "text-success" : "text-danger")}>
+        {withinSla ? <CircleCheck className="h-3.5 w-3.5" /> : <AlarmClockOff className="h-3.5 w-3.5" />}
+        First response in {fmtSlaResponse(sla)} — {withinSla ? "within" : "outside"} the {label} SLA
+      </p>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        Target {label} · {respondedInH.toFixed(1)}h taken ({Math.round((respondedInH / sla.targetHours) * 100)}% of target).
+      </p>
+    </div>
+  );
+}
+
+function fmtSlaResponse(sla: SlaState): string {
+  return sla.respondedInMs != null ? fmtDurationMs(sla.respondedInMs) : "—";
+}
+
 // ── ticket detail dialog ─────────────────────────────────────
-function TicketDialog({ ticket: t, onClose }: { ticket: TicketItem; onClose: () => void }) {
+function TicketDialog({ ticket: t, now, onClose }: { ticket: TicketItem; now: number; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const [confirmClose, setConfirmClose] = useState(false);
@@ -308,6 +495,8 @@ function TicketDialog({ ticket: t, onClose }: { ticket: TicketItem; onClose: () 
             <span>· updated {relativeTime(t.updatedAt)}</span>
           </DialogDescription>
         </DialogHeader>
+
+        <SlaPanel ticket={t} now={now} />
 
         <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm leading-relaxed text-foreground">
           {t.description}
@@ -367,7 +556,7 @@ function TicketDialog({ ticket: t, onClose }: { ticket: TicketItem; onClose: () 
           <p className="text-[11px] text-muted-foreground">
             {t.status === "RESOLVED"
               ? "Resolved — close the ticket if you are satisfied."
-              : "Normal priority: first response within 2 business days."}
+              : `${PRIORITY_LABELS[t.priority] ?? t.priority} priority: first response within ${SLA_TARGET_LABELS[t.priority] ?? SLA_TARGET_LABELS.NORMAL}.`}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose}>Close Window</Button>
@@ -460,7 +649,7 @@ function CreateTicketDialog({ open, onOpenChange }: { open: boolean; onOpenChang
           <DialogHeader>
             <DialogTitle>Raise a Ticket</DialogTitle>
             <DialogDescription>
-              Route your request to the right team. Normal priority: first response within 2 business days.
+              Route your request to the right team — each priority carries a first-response SLA, tracked live on your ticket.
             </DialogDescription>
           </DialogHeader>
 
@@ -509,22 +698,30 @@ function CreateTicketDialog({ open, onOpenChange }: { open: boolean; onOpenChang
 
             <div className="space-y-1.5">
               <Label className="text-xs">Priority</Label>
-              <RadioGroup value={priority} onValueChange={setPriority} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <RadioGroup value={priority} onValueChange={setPriority} className="grid grid-cols-2 gap-2">
                 {PRIORITY_OPTIONS.map((p) => (
                   <label
                     key={p.value}
                     className={cn(
-                      "flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors",
+                      "flex cursor-pointer flex-col gap-0.5 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors",
                       priority === p.value
                         ? "border-primary/40 bg-primary/10 text-primary"
                         : "border-border text-muted-foreground hover:bg-accent"
                     )}
                   >
-                    <RadioGroupItem value={p.value} className="h-3.5 w-3.5" />
-                    {p.label}
+                    <span className="flex items-center gap-1.5">
+                      <RadioGroupItem value={p.value} className="h-3.5 w-3.5" />
+                      {p.label}
+                    </span>
+                    <span className={cn("pl-6 text-[10px] font-normal", priority === p.value ? "text-primary/80" : "text-muted-foreground/80")}>
+                      ~{p.sla} response
+                    </span>
                   </label>
                 ))}
               </RadioGroup>
+              <p className="text-[11px] text-muted-foreground">
+                The first-response SLA is measured from submission. {SLA_TARGET_LABELS[priority] ?? SLA_TARGET_LABELS.NORMAL} for the selected priority.
+              </p>
             </div>
           </div>
 

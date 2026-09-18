@@ -391,3 +391,36 @@ Unresolved / Notes for next phase:
 - Notifications API could accept a `type` param server-side (currently filters client-side via query param — verify; the view passes ?type= and it works, so server-side filtering already exists).
 - Ideas backlog: team drill-down dialogs, helpdesk SLA timers, announcements pinning, payslip PDF logo embedding, weekly digest notification seed.
 - The stale a11y console entry may reappear in `agent-browser console errors` output (cumulative session log) — it predates round 5's fix; fresh-warning interceptors confirm 0 occurrences.
+---
+Task ID: 19 (webDevReview round 7)
+Agent: main (Z.ai Code)
+Task: Scheduled review — QA sweep (clean) + NEW Helpdesk first-response SLA system (live countdowns, breach states, urgency sort, SLA stats).
+
+Work Log:
+- QA sweep (agent-browser, employee session): server healthy, DB intact (26 users — round-5 fix still holding), all 15 views render with 0 fresh console errors (armed console.error + pageerror interceptors), mobile 390px zero overflow (payroll + helpdesk). Verified mobile bottom-nav "Requests" tab = helpdesk (earlier suspicion of a missing Help Desk entry in the More sheet was a false alarm — it is the 4th primary tab). No bugs found → feature round.
+- NEW FEATURE — Helpdesk first-response SLA system:
+  - New lib src/lib/hrms/sla.ts: SLA policy (URGENT 4h / HIGH 8h / NORMAL 48h / LOW 72h), pure slaState() (ON_TRACK | AT_RISK | BREACHED | MET | MISSED — at-risk when remaining < max(15% of target, 2h)), countdown/response labels, fmtDurationMs ("41h 59m" / "2d 6h"), slaSummary() (open/breached/atRisk/avgFirstResponseHours/metRatePct).
+  - API /api/hr-tickets (collection + [id]): mapTicket now attaches slaDueAt (createdAt + target) + firstResponseAt (first non-"You" comment); GET returns server-computed summary. NO schema change — SLA derived from existing comments + createdAt (zero migration risk by design).
+  - View helpdesk-view.tsx:
+    - useNow(30s) live clock — countdowns tick in real time (verified "Overdue by 2h" → "2h 6m" across a session).
+    - SlaChip on every ticket card: gray on-track "Due in 41h", amber pulsing at-risk "Due in 3h", red "Overdue by 2h", green "Responded in 30m", red-muted missed. tabular-nums, tooltip with policy.
+    - Open tickets sorted by urgency: BREACHED → AT_RISK → ON_TRACK (soonest due) → responded. Breached cards get danger border tint, at-risk amber tint.
+    - Section header stats: "1 breached · 1 due soon · 67% responses in SLA" chips.
+    - Ticket dialog SLA panel: pending → progress bar (elapsed vs target, primary/amber/red) + live countdown + due date/time + assignee; breached → overdue escalation copy; responded → "First response in 30m — within the 4 hours SLA (13% of target)" MET/MISSED result card. Footer copy now dynamic per priority.
+    - Create dialog: priority radios (2x2 grid) each show "~4 hours response" SLA hint + policy footnote; description mentions live SLA tracking.
+    - FAQ gains "What are the response SLAs?" entry with the full policy table.
+  - Card hover lift polish (hover:-translate-y-px + shadow-md) consistent with StatCard.
+- Seed: 3 showcase tickets added (HR-1048 HIGH breached ~2h overdue, HR-1039 NORMAL at-risk 3h left, HR-1033 URGENT closed MET in 30m) + same 3 surgically inserted into live DB (idempotent script, insert-sla-tickets.ts). Rohit now demos all 5 SLA states.
+- E2E verified in browser: raised URGENT ticket via UI (HR-1051) → appeared instantly with "Due in 4h" chip → deleted with its audit rows (cleanup script; AuditLog filter fields are entity/entityId).
+- VLM reviews: desktop SLA chips ("clean, professional, high visual hierarchy"), breached dialog ("professional, free of technical rendering errors"), dark dialog + mobile (PASS; one mobile chip-width warning disproven by DOM overflow test 390=390), create dialog initially flagged REAL bug — 4-col priority grid truncated "~2 business days response" — FIXED to 2x2 grid, re-verified equal 195x49 cards, single-line hints, VLM "Pass".
+- Regression: desk greeting + round-6 document banners intact, tsc 0 app errors, lint passes, mobile 390px zero overflow, dark mode clean, console clean, dev.log clean.
+
+Stage Summary:
+- 22 views / 42 API route groups. Helpdesk upgraded with a full first-response SLA layer: live countdown chips, 5-state color system, urgency-sorted queue, dialog SLA panels with progress bars, create-time expectation setting, and summary stats.
+- New lib src/lib/hrms/sla.ts (client+server safe, pure functions). No schema migration needed.
+- CONVENTION: SLA state is derived (createdAt + priority + first non-employee comment) — never stored; client recomputes live from slaDueAt/firstResponseAt so countdowns work between fetches.
+
+Unresolved / Notes for next phase:
+- HR-1039's due time renders "12:00 am" (createdAt math lands at midnight IST) — factually correct but a more natural business-hour due time would need seed time adjustments; consider shifting if it bothers reviewers.
+- Assignee responses are seed-only (no agent simulation) — new tickets raised by users will realistically count down toward due; a future "simulate IT response" dev tool could demo MET live.
+- Ideas backlog: team drill-down dialogs, announcements pinning, payslip PDF logo embedding, weekly digest notification seed, resolution-SLA (needs resolvedAt column).

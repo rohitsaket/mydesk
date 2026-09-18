@@ -669,6 +669,31 @@ async function main() {
     createdAt: new Date(now.getTime() - 120 * 3600000), updatedAt: new Date(now.getTime() - 96 * 3600000),
   } });
   await db.hrTicket.create({ data: { code: "HR-1050", employeeId: employees["NISS018"].id, category: "IT", subject: "Laptop battery draining fast", description: "Battery health dropped to 61%.", priority: "NORMAL", status: "OPEN", assignee: "IT Support", createdAt: new Date(now.getTime() - 6 * 3600000) } });
+  // SLA showcase tickets (first-response SLA demo states):
+  // HR-1048 — HIGH raised 10h ago, no response → SLA BREACHED (8h target, ~2h overdue)
+  await db.hrTicket.create({ data: {
+    code: "HR-1048", employeeId: rohitId, category: "IT", subject: "VPN disconnects every 30 minutes",
+    description: "Since the client update this morning the VPN drops every half hour. Reconnecting takes 5+ minutes and I am losing meeting time.",
+    priority: "HIGH", status: "OPEN", assignee: "IT Support",
+    createdAt: new Date(now.getTime() - 10 * 3600000), updatedAt: new Date(now.getTime() - 10 * 3600000),
+  } });
+  // HR-1039 — NORMAL raised 45h ago, no response → AT RISK (3h left of 48h)
+  await db.hrTicket.create({ data: {
+    code: "HR-1039", employeeId: rohitId, category: "FACILITIES", subject: "Conference room AC making loud noise",
+    description: "The unit in Bay-2 conference room rattles loudly during meetings. Please send a technician before the client review on Friday.",
+    priority: "NORMAL", status: "OPEN", assignee: "Facilities",
+    createdAt: new Date(now.getTime() - 45 * 3600000), updatedAt: new Date(now.getTime() - 45 * 3600000),
+  } });
+  // HR-1033 — URGENT responded in 30min → SLA MET, closed
+  await db.hrTicket.create({ data: {
+    code: "HR-1033", employeeId: rohitId, category: "HR", subject: "Name misspelled on insurance card",
+    description: "My group mediclaim e-card reads 'Rohit Patle' instead of 'Rohit Patel'. Need a corrected card before my hospital visit.",
+    priority: "URGENT", status: "CLOSED", assignee: "HR Operations",
+    commentsJson: JSON.stringify([
+      { by: "Kavya Gowda (HR)", at: new Date(now.getTime() - 79.5 * 3600000).toISOString(), text: "Apologies! Correction raised with the insurer — corrected e-card will be in your Documents within 24 hours." },
+    ]),
+    createdAt: new Date(now.getTime() - 80 * 3600000), updatedAt: new Date(now.getTime() - 78 * 3600000),
+  } });
 
   // ── announcements ───────────────────────────────────────────
   const ann1 = await db.announcement.create({ data: { companyId: company.id, title: "Office closed on Foundation Day", body: "All offices will remain closed on Foundation Day. Team celebrations are planned for the preceding evening. Please plan deliverables accordingly.", level: "COMPANY", category: "HOLIDAY", priority: "IMPORTANT", requiresAck: false, publishedAt: new Date(now.getTime() - 40 * 3600000) } });

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { getAuth, ok, badRequest, unauthorized, serverError, audit } from "@/lib/hrms/auth";
+import { slaSummary, type SlaInput, SLA_TARGET_HOURS } from "@/lib/hrms/sla";
 
 export const dynamic = "force-dynamic";
 
@@ -44,11 +45,19 @@ function parseComments(json: string): TicketComment[] {
   }
 }
 
+/** First non-employee comment = first response (ISO) or null while pending. */
+function firstResponseOf(comments: TicketComment[]): string | null {
+  const first = comments.find((c) => c.by !== "You");
+  return first ? first.at : null;
+}
+
 function mapTicket(t: {
   id: string; code: string; category: string; subject: string; description: string;
   priority: string; status: string; assignee: string | null; commentsJson: string;
   createdAt: Date; updatedAt: Date;
 }) {
+  const comments = parseComments(t.commentsJson);
+  const firstResponseAt = firstResponseOf(comments);
   return {
     id: t.id,
     code: t.code,
@@ -58,9 +67,12 @@ function mapTicket(t: {
     priority: t.priority,
     status: t.status,
     assignee: t.assignee,
-    comments: parseComments(t.commentsJson),
+    comments,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
+    // SLA fields — client derives live state from these (no clock skew, live countdown)
+    slaDueAt: new Date(t.createdAt.getTime() + (SLA_TARGET_HOURS[t.priority] ?? SLA_TARGET_HOURS.NORMAL) * 3600000).toISOString(),
+    firstResponseAt,
   };
 }
 
@@ -75,7 +87,11 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    return ok({ items: tickets.map(mapTicket) });
+    const items = tickets.map(mapTicket);
+    const summary = slaSummary(
+      items.map((t): SlaInput => ({ priority: t.priority, createdAt: t.createdAt, firstResponseAt: t.firstResponseAt }))
+    );
+    return ok({ items, summary });
   } catch (err) {
     return serverError(err);
   }
