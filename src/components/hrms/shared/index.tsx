@@ -125,11 +125,15 @@ export function StatCard({
     info: "text-info",
   } as const;
   return (
-    <Card className={cn("shadow-none", className)}>
+    <Card className={cn("group shadow-none transition-[box-shadow,border-color,transform] duration-200 hover:-translate-y-px hover:border-primary/25 hover:shadow-md active:translate-y-0", className)}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-          {icon ? <span className="text-muted-foreground/70">{icon}</span> : null}
+          {icon ? (
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-muted text-muted-foreground/70 transition-colors group-hover:bg-primary/10">
+              {icon}
+            </span>
+          ) : null}
         </div>
         <p className={cn("mt-1.5 text-xl font-semibold tabular", tones[tone])}>{value}</p>
         {hint ? <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p> : null}

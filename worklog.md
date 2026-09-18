@@ -295,3 +295,38 @@ Unresolved / Notes for next phase:
 - Compose currently publishes instantly; could add "scheduled/pinned" announcements or rich formatting (markdown) later.
 - widgetPrefs raw-SQL column migration still pending (low priority).
 - Consider Insights deep-link from the new performance-review announcement (already mentions the module in copy).
+---
+Task ID: 16 (webDevReview round 4)
+Agent: main (Z.ai Code)
+Task: Scheduled review — QA sweep + NEW Payslip PDF export (server-side pdf-lib, branded) + keyboard shortcuts system + StatCard styling polish.
+
+Work Log:
+- QA sweep: server healthy (200), all views render, console clean. Debunked a stale console error from last round (announcements-view parse error was a transient mid-write Fast Refresh state; file on disk was correct, verified in browser). No real bugs found → feature round.
+- QA gotcha documented: synthetic KeyboardEvents must be dispatched on document.body (window-dispatched events never reach document-level listeners); `?`/g-shortcut tests use body dispatch. Also `agent-browser set viewport <w> <h>` is the viewport command.
+- NEW FEATURE — Payslip PDF export (server-side, premium):
+  - Vendored pyftsubset cuts of DejaVuSans + Bold (~20KB each, ASCII + en-dash + ₹ U+20B9; license file included) into assets/fonts/ — kept tiny by pre-subsetting with fonttools instead of pdf-lib runtime subsetting (avoids the known pdf-lib subset CIDToGIDMap blank-glyph issue in Acrobat).
+  - `bun add pdf-lib @pdf-lib/fontkit` (fontkit REQUIRED for custom font embedding — first run 500'd with "no fontkit instance" until pdf.registerFontkit(fontkit)).
+  - New module src/lib/hrms/pdf/payslip-pdf.ts: branded A4 layout — primary header band (company + PAYSLIP + period), status chip (PAID green/PROCESSING amber), employee grid card, side-by-side Earnings/Deductions tables with tinted headers + aligned rows + totals, NET PAYABLE band with Indian words ("Rupees Seventy Five Thousand Five Hundred Eighty Only"), 3-cell summary strip (Payable/LOP/OT), confidential footer with IST stamp. Indian digit grouping (₹12,34,567), tx() sanitizer whitelists subset glyphs, all strings width-measured for right alignment.
+  - API: /api/payroll/[id]?download=1 now returns the PDF (was text) — same auth/IDOR scoping + PAYSLIP_DOWNLOAD audit; filename Payslip-<Month>-<Year>-<empcode>.pdf; ~36KB output.
+  - Frontend: payslip dialog button "Download PDF"; per-row FileDown icon in history table (stopPropagation, aria-labels); "PDF" quick-action on Latest Payslip hero card.
+  - Verified: curl download (valid %PDF-1.7, 36083 bytes), pdftotext content check (all sections + ₹ correct), VLM review of rendered page: "No issues. Layout clean, columns well-aligned, ₹ renders correctly, no overlap/clipping."
+- NEW FEATURE — Keyboard shortcuts system:
+  - Global keydown in command-palette.tsx: `?` (when not typing & no dialog open) opens ShortcutsHelp dialog; gmail-style `g`+key navigation (900ms pending window) to Desk/Insights/Attendance/Calendar/Leave/Tasks/Payroll/Notifications/Settings; typing guard (input/textarea/select/contentEditable targets) + dialog-open guard.
+  - New component shortcuts-help.tsx: kbd-chip rows grouped Global/Jump-to, footer "Try it" chips (all 9 modules, click = navigate) — restacked vertically after VLM flagged footer crowding (initial flex layout squeezed text to 42px/4 lines).
+  - Command palette gains "Keyboard shortcuts" item (searchable) + footer tip line now mentions `?`.
+  - Verified: g+p→Payroll, g+i→Insights, g+d→Desk; ? opens/closes (Esc); palette entry opens dialog; typing guard (g+p in Directory search input stays put); Try-it buttons navigate.
+- STYLING: shared StatCard (used across all views) gains group + hover:-translate-y-px + hover:border-primary/25 + hover:shadow-md + icon chip bg; payroll hero grid cells gain muted bg + hover borders + gradient top-rule on Net Pay cell.
+- Verification: bunx tsc --noEmit 0 app errors; bun run lint passes; mobile 390px Insights zero horizontal overflow (scrollW=390); dark mode clean; desktop 1440 regression (desk/payroll/directory) OK; zero fresh console/page errors; dev.log clean (only the pre-fix fontkit 500).
+- Cleanup: 3 test PAYSLIP_DOWNLOAD audit rows surgically removed (AuditLog field is `details`, not `detail` — model uses details). README updated (PDF export + shortcuts in highlights table and shortcut list).
+- Committed + pushed to github.com/rohitsaket/mydesk (origin/main with token auth in .git/config).
+
+Stage Summary:
+- 22 views / 42 API route groups. Payroll gains real branded PDF payslips; app gains a full keyboard shortcuts layer (help + jump navigation); StatCards polished app-wide.
+- New deps: pdf-lib + @pdf-lib/fontkit. New repo assets: assets/fonts/DejaVuSans{,-Bold}.ttf (~20KB subset cuts) + DejaVu-LICENSE.txt.
+- CONVENTIONS: custom-font PDF embedding needs registerFontkit(fontkit); pre-subset fonts with pyftsubset (unicodes U+0020-007E,U+2013,U+20B9) to keep PDFs small; sanitize all PDF strings through tx() (missing glyphs throw at encode time).
+
+Unresolved / Notes for next phase:
+- Document model has no expiresAt — expiry alerts would need schema change (skipped this round by design).
+- widgetPrefs raw-SQL column migration still pending (low priority).
+- PDF payslip could add company logo image embedding (pdf-lib embedPng) if a logo asset is ever produced.
+- Possible next features: announcements pinning/scheduling, helpdesk SLA timers, team drill-down dialogs.

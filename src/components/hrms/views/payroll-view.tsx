@@ -22,7 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   Wallet, CalendarDays, FileText, History, Landmark, Download, Info,
-  CircleCheck, TriangleAlert, Clock, ArrowRight, Building2,
+  CircleCheck, TriangleAlert, Clock, ArrowRight, Building2, FileDown,
 } from "lucide-react";
 
 const MONTHS = [
@@ -196,9 +196,16 @@ function LatestPayslipCard({ latest, onView }: { latest: PayslipSummary; onView:
       title="Latest Payslip"
       icon={<FileText className="h-3.5 w-3.5 text-primary" />}
       action={
-        <Button size="sm" className="h-7 gap-1 text-xs" onClick={onView}>
-          View Payslip
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button size="sm" variant="outline" className="h-7 gap-1 text-xs" asChild>
+            <a href={`/api/payroll/${latest.id}?download=1`} download>
+              <FileDown className="h-3.5 w-3.5" /> PDF
+            </a>
+          </Button>
+          <Button size="sm" className="h-7 gap-1 text-xs" onClick={onView}>
+            View Payslip
+          </Button>
+        </div>
       }
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -206,15 +213,16 @@ function LatestPayslipCard({ latest, onView }: { latest: PayslipSummary; onView:
         <StatusBadge status={latest.status} label={latest.status === "PAID" ? "Paid" : latest.status} />
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2">
-        <div className="rounded-lg border border-border p-2.5">
+        <div className="rounded-lg border border-border bg-muted/20 p-2.5 transition-colors hover:border-muted-foreground/25">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Gross</p>
           <p className="mt-0.5 text-sm font-semibold tabular text-foreground sm:text-base">{fmtINR(latest.gross)}</p>
         </div>
-        <div className="rounded-lg border border-border p-2.5">
+        <div className="rounded-lg border border-border bg-muted/20 p-2.5 transition-colors hover:border-muted-foreground/25">
           <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Deductions</p>
           <p className="mt-0.5 text-sm font-semibold tabular text-danger sm:text-base">{fmtINR(latest.deductions)}</p>
         </div>
-        <div className="rounded-lg border border-success/25 bg-success-soft p-2.5">
+        <div className="relative overflow-hidden rounded-lg border border-success/25 bg-success-soft p-2.5 transition-colors hover:border-success/40">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-success/50 to-transparent" aria-hidden />
           <p className="text-[10px] font-medium uppercase tracking-wide text-success/80">Net Pay</p>
           <p className="mt-0.5 text-sm font-semibold tabular text-success sm:text-base">{fmtINR(latest.net)}</p>
         </div>
@@ -253,6 +261,7 @@ function HistoryCard({ payslips, onView }: { payslips: PayslipSummary[]; onView:
                   <TableHead className="text-right">Net</TableHead>
                   <TableHead className="text-right">Payable</TableHead>
                   <TableHead>Generated</TableHead>
+                  <TableHead className="w-10" aria-label="Download"><span className="sr-only">Download PDF</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -271,6 +280,18 @@ function HistoryCard({ payslips, onView }: { payslips: PayslipSummary[]; onView:
                     <TableCell className="py-2 text-right text-sm font-semibold tabular">{fmtINR(p.net)}</TableCell>
                     <TableCell className="py-2 text-right text-sm tabular">{p.payableDays}d</TableCell>
                     <TableCell className="py-2 text-xs text-muted-foreground">{fmtDateShort(p.generatedAt)}</TableCell>
+                    <TableCell className="py-2">
+                      <a
+                        href={`/api/payroll/${p.id}?download=1`}
+                        download
+                        title={`Download ${monthLabel(p.month, p.year)} payslip (PDF)`}
+                        aria-label={`Download ${monthLabel(p.month, p.year)} payslip as PDF`}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-primary focus-ring"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FileDown className="h-3.5 w-3.5" />
+                      </a>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -429,7 +450,7 @@ function PayslipDialog({ id, onClose }: { id: string; onClose: () => void }) {
                 <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
                 <Button size="sm" asChild>
                   <a href={`/api/payroll/${d.payslip.id}?download=1`} download>
-                    <Download className="mr-1.5 h-3.5 w-3.5" /> Download (text)
+                    <Download className="mr-1.5 h-3.5 w-3.5" /> Download PDF
                   </a>
                 </Button>
               </DialogFooter>

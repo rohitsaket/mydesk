@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { getAuth, ok, unauthorized, serverError, audit } from "@/lib/hrms/auth";
-import { fmtINR } from "@/lib/hrms/time";
+import { buildPayslipPdf } from "@/lib/hrms/pdf/payslip-pdf";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +37,7 @@ function notFound() {
   );
 }
 
-/** GET /api/payroll/[id] — full payslip detail (own payslips only). ?download=1 → text attachment. */
+/** GET /api/payroll/[id] — full payslip detail (own payslips only). ?download=1 → branded PDF attachment. */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const auth = await getAuth();
@@ -60,52 +60,38 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const monthLabel = `${MONTHS[slip.period.month - 1]} ${slip.period.year}`;
 
     if (download) {
-      const line = "─".repeat(58);
-      const pad = (label: string, value: string) => `${label.padEnd(26, " ")}${value}`;
-      const rows = (items: PayslipLine[]) =>
-        items.map((i) => pad(`  ${i.label}`, fmtINR(i.amount))).join("\n");
-
-      const content = [
-        "═".repeat(58),
-        `  ${companyName.toUpperCase()}`,
-        `  PAYSLIP — ${monthLabel.toUpperCase()}`,
-        "═".repeat(58),
-        "",
-        pad("Employee", `${emp.firstName} ${emp.lastName}`),
-        pad("Employee Code", emp.empCode),
-        pad("Designation", emp.designation),
-        pad("Department", department?.name ?? "—"),
-        pad("Pay Period", monthLabel),
-        pad("Pay Date", slip.period.payDate.toISOString().slice(0, 10)),
-        pad("Payslip Status", slip.status),
-        "",
-        "EARNINGS",
-        line,
-        rows(earnings),
-        `  ${pad("Gross Earnings", fmtINR(slip.gross))}`,
-        "",
-        "DEDUCTIONS",
-        line,
-        rows(deductionLines),
-        `  ${pad("Total Deductions", fmtINR(slip.deductions))}`,
-        "",
-        line,
-        `  ${pad("NET PAY", fmtINR(slip.net))}`,
-        line,
-        "",
-        pad("Payable Days", String(slip.payableDays)),
-        pad("LOP Days", String(slip.lopDays)),
-        pad("Overtime Hours", `${slip.overtimeHours}h`),
-        "",
-        "Computer-generated payslip — My Desk HRMS",
-      ].join("\n");
+      const pdfBytes = await buildPayslipPdf({
+        company: companyName,
+        employee: {
+          name: `${emp.firstName} ${emp.lastName}`,
+          empCode: emp.empCode,
+          designation: emp.designation,
+          department: department?.name ?? "-",
+        },
+        payslip: {
+          month: slip.period.month,
+          year: slip.period.year,
+          status: slip.status,
+          gross: slip.gross,
+          deductions: slip.deductions,
+          net: slip.net,
+          payableDays: slip.payableDays,
+          lopDays: slip.lopDays,
+          overtimeHours: slip.overtimeHours,
+          earnings,
+          deductionLines,
+        },
+        payDate: slip.period.payDate,
+        generatedAt: new Date(),
+      });
 
       const slug = `Payslip-${MONTHS[slip.period.month - 1]}-${slip.period.year}-${emp.empCode}`.toLowerCase();
-      await audit(emp, "PAYSLIP_DOWNLOAD", "Payslip", slip.id, `Downloaded payslip ${monthLabel}`);
-      return new Response(content, {
+      await audit(emp, "PAYSLIP_DOWNLOAD", "Payslip", slip.id, `Downloaded payslip PDF ${monthLabel}`);
+      return new Response(pdfBytes as unknown as BodyInit, {
         headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Content-Disposition": `attachment; filename="${slug}.txt"`,
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${slug}.pdf"`,
+          "Cache-Control": "no-store",
         },
       });
     }

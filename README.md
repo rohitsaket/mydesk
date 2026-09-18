@@ -16,14 +16,14 @@ Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · shadcn/u
 | **Leave engine** | Two-stage approvals (Manager → HR), quota balances with carry-forward, half-day modes, substitute assignment, status timeline |
 | **Duty requests** | Unified WFH & On- Duty with subtypes (client visit, field, training…), approval chain with notifications |
 | **Timesheets** | Weekly grid, draft → submit → approve/reject, billable split, per-project rollups |
-| **Payroll** | Payroll periods, full payslip breakdown (earnings/deductions/OT/LOP), payslip dialog |
+| **Payroll** | Payroll periods, full payslip breakdown (earnings/deductions/OT/LOP), payslip dialog, branded **PDF payslip export** (₹ formatting, amount in words, one-click from dialog/history) |
 | **Expenses** | Category claims with receipt metadata, Manager → Finance → Paid lifecycle |
 | **Calendar** | Month grid merging meetings, trainings, company events, holidays, leaves, task due dates, payroll days, birthdays & anniversaries |
 | **Helpdesk** | HR/IT/Facilities/Payroll/Admin tickets with priorities and comment threads |
 | **Performance** | Quarterly goals with progress tracking, auto-completion at target, self-review |
 | **Manager center** | Team-today live board, approvals inbox (5 tabs) with single/batch decisions, every decision audited & notified |
 | **Directory & profile** | Searchable people directory, self-service profile with restricted-field guards, masked bank/PAN data |
-| **Command bar** | ⌘K command palette for navigation + quick actions, quick-create menu, notifications with deep links |
+| **Command bar** | ⌘K command palette for navigation + quick actions, quick-create menu, notifications with deep links, keyboard shortcuts (`?` cheatsheet, `g`+key jump navigation) |
 
 **20 views, 40+ API endpoints, 28 database models** — role-based access (Employee / Manager / HR / Admin), IDOR-safe scoping, zod validation, audit logs, and toast + notification feedback everywhere.
 
@@ -75,7 +75,7 @@ bun run dev
 - **Payroll / Expenses / Documents / Helpdesk** — financial & service modules.
 - **Directory / Performance / Profile / Settings** — people modules.
 - **Team / Approvals** — manager-only command center.
-- **⌘K** — command palette anywhere; **quick-create (+)** in the top bar jumps straight into any module's form.
+- **⌘K** — command palette anywhere; **quick-create (+)** in the top bar jumps straight into any module's form; **?** — keyboard shortcut cheatsheet; **g** then a key (e.g. `g p`) — jump straight to a module.
 
 ## 🏗️ Architecture
 
