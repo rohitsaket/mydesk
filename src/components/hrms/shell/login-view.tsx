@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,15 +10,15 @@ import { toast } from "sonner";
 import { apiPost, ApiError } from "@/lib/hrms/client";
 import type { LoginResponse } from "@/lib/hrms/types";
 import {
-  CalendarCheck2, Clock3, FileText, Landmark, Loader2, Lock, Mail,
+  ArrowRight, CalendarCheck2, Clock3, FileText, Landmark, Loader2, Lock, Mail,
   ShieldCheck, Sparkles, Wallet, LogIn,
 } from "lucide-react";
 
 const DEMO_ACCOUNTS = [
-  { label: "Employee", email: "rohit.patel@niss.tech", note: "Senior Developer" },
-  { label: "Manager", email: "anita.desai@niss.tech", note: "Engineering Manager" },
-  { label: "HR", email: "payal.mehta@niss.tech", note: "HR Manager" },
-  { label: "Admin", email: "vikram.shah@niss.tech", note: "Head of IT & Systems" },
+  { label: "Employee", email: "rohit.patel@niss.tech", note: "Senior Developer", initials: "RP", tint: "bg-primary/15 text-primary" },
+  { label: "Manager", email: "anita.desai@niss.tech", note: "Engineering Manager", initials: "AD", tint: "bg-[var(--success-soft)] text-[var(--success)]" },
+  { label: "HR", email: "payal.mehta@niss.tech", note: "HR Manager", initials: "PM", tint: "bg-[var(--warning-soft)] text-[#B54708]" },
+  { label: "Admin", email: "vikram.shah@niss.tech", note: "Head of IT & Systems", initials: "VS", tint: "bg-[var(--danger-soft)] text-[var(--danger)]" },
 ];
 
 const FEATURES = [
@@ -30,10 +30,29 @@ const FEATURES = [
   { icon: ShieldCheck, text: "Role-based access control" },
 ];
 
+const BRAND_STATS = [
+  { value: "22", label: "modules" },
+  { value: "26", label: "colleagues" },
+  { value: "40+", label: "API endpoints" },
+];
+
+function useIstClock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return now;
+}
+
 export function LoginView({ onLogin }: { onLogin: (employee: LoginResponse["employee"], theme: string) => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const clock = useIstClock();
+
+  const timeStr = clock.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
+  const dateStr = clock.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
 
   async function doLogin(emailVal: string, passVal: string) {
     if (loading) return;
@@ -54,22 +73,33 @@ export function LoginView({ onLogin }: { onLogin: (employee: LoginResponse["empl
     <div className="flex min-h-screen flex-col bg-background lg:flex-row">
       {/* ── Brand panel ── */}
       <div className="relative flex flex-col justify-between overflow-hidden bg-[#101828] px-8 py-10 text-white lg:w-[46%] lg:px-14 lg:py-14">
-        <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-primary/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.35]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
-            backgroundSize: "44px 44px",
-          }}
-        />
+        {/* aurora blobs */}
+        <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 animate-pulse rounded-full bg-primary/30 blur-3xl [animation-duration:7s]" />
+        <div className="pointer-events-none absolute -bottom-40 -left-24 h-96 w-96 animate-pulse rounded-full bg-primary/20 blur-3xl [animation-duration:9s] [animation-delay:1.5s]" />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.35]" style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+        }} />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#101828] to-transparent" />
 
-        <div className="relative flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-lg font-bold">N</div>
-          <div>
-            <p className="text-sm font-semibold tracking-wide">NISS HRMS</p>
-            <p className="text-xs text-white/60">My Desk</p>
+        <div className="relative flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-lg font-bold shadow-lg shadow-primary/30">N</div>
+            <div>
+              <p className="text-sm font-semibold tracking-wide">NISS HRMS</p>
+              <p className="text-xs text-white/60">My Desk</p>
+            </div>
+          </div>
+          {/* live clock chip */}
+          <div className="hidden items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 backdrop-blur sm:flex">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            <span className="text-xs font-medium tabular-nums text-white/90">{timeStr}</span>
+            <span aria-hidden className="text-white/30">·</span>
+            <span className="hidden text-[11px] text-white/60 md:inline">{dateStr}</span>
           </div>
         </div>
 
@@ -78,7 +108,9 @@ export function LoginView({ onLogin }: { onLogin: (employee: LoginResponse["empl
             <Sparkles className="mr-1 h-3 w-3" /> Employee self-service portal
           </Badge>
           <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-            Your Workday.<br />One Workspace.
+            Your Workday.
+            <br />
+            <span className="bg-gradient-to-r from-sky-300 via-white to-white bg-clip-text text-transparent">One Workspace.</span>
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-white/70">
             The complete corporate employee desk — attendance, leave, tasks, payroll,
@@ -86,8 +118,11 @@ export function LoginView({ onLogin }: { onLogin: (employee: LoginResponse["empl
           </p>
           <ul className="mt-8 grid gap-3 sm:grid-cols-2">
             {FEATURES.map((f) => (
-              <li key={f.text} className="flex items-center gap-2.5 text-xs text-white/80">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10">
+              <li
+                key={f.text}
+                className="group flex items-center gap-2.5 text-xs text-white/80 transition-transform duration-200 hover:translate-x-0.5"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/10 transition-colors group-hover:bg-white/20">
                   <f.icon className="h-3.5 w-3.5" />
                 </span>
                 {f.text}
@@ -96,9 +131,19 @@ export function LoginView({ onLogin }: { onLogin: (employee: LoginResponse["empl
           </ul>
         </div>
 
-        <div className="relative mt-12 flex items-center gap-2 text-[11px] text-white/50 lg:mt-0">
-          <ShieldCheck className="h-3.5 w-3.5" />
-          Sessions secured with httpOnly cookies · role-based access
+        <div className="relative mt-12 space-y-5 lg:mt-0">
+          <div className="flex items-center gap-5 border-t border-white/10 pt-5">
+            {BRAND_STATS.map((s) => (
+              <div key={s.label} className="flex items-baseline gap-1.5">
+                <span className="text-lg font-semibold tabular-nums">{s.value}</span>
+                <span className="text-[11px] text-white/50">{s.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 text-[11px] text-white/50">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Sessions secured with httpOnly cookies · role-based access
+          </div>
         </div>
       </div>
 
@@ -165,6 +210,9 @@ export function LoginView({ onLogin }: { onLogin: (employee: LoginResponse["empl
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogIn className="mr-2 h-4 w-4" />}
               {loading ? "Signing in…" : "Sign In"}
+              <kbd className="pointer-events-none ml-2 hidden rounded border border-primary-foreground/30 bg-primary-foreground/10 px-1.5 py-0.5 text-[10px] font-medium sm:inline">
+                ↵
+              </kbd>
             </Button>
           </form>
 
@@ -180,15 +228,25 @@ export function LoginView({ onLogin }: { onLogin: (employee: LoginResponse["empl
                   key={acc.email}
                   type="button"
                   disabled={loading}
-                  className="focus-ring group rounded-lg border border-border bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-accent"
+                  className="focus-ring group rounded-lg border border-border bg-card p-3 text-left transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-sm"
                   onClick={() => {
                     setEmail(acc.email);
                     setPassword("demo123");
                     doLogin(acc.email, "demo123");
                   }}
                 >
-                  <p className="text-xs font-semibold text-foreground group-hover:text-primary">{acc.label}</p>
-                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{acc.note}</p>
+                  <div className="flex items-center gap-2.5">
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${acc.tint}`}>
+                      {acc.initials}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-1 text-xs font-semibold text-foreground group-hover:text-primary">
+                        <span className="truncate">{acc.label}</span>
+                        <ArrowRight className="h-3 w-3 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                      </p>
+                      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{acc.note}</p>
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>

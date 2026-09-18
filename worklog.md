@@ -265,3 +265,33 @@ Unresolved / Notes for next phase:
 - Read-more threshold (180 chars) — seed bodies are short; consider seeding one longer announcement to showcase expansion.
 - Announcements feed could add HR/Admin "compose" capability (currently read-only for employees — by design for demo).
 - widgetPrefs raw-SQL column migration still pending (low priority).
+
+---
+Task ID: 15 (webDevReview round 3)
+Agent: main (Z.ai Code)
+Task: Scheduled review — QA sweep + NEW Announcements compose/delete management (HR/Admin) + login page premium styling pass.
+
+Work Log:
+- QA sweep (agent-browser, employee session): login → desk → 6 views navigated (Announcements/Insights/Payroll/Tasks/Performance/Directory), zero page errors, mobile 390px zero horizontal overflow, footer intact. App stable.
+- NEW FEATURE — Announcements management (HR/Admin only):
+  - API POST /api/announcements action:"compose" — zod validation (title 5-120, body 10-2000, level/category/priority enums, requiresAck), RBAC 403 for non-HR/Admin, creates announcement + ANNOUNCEMENT_PUBLISHED audit, returns item in GET shape.
+  - API action:"delete" — RBAC + company scoping, cascade removes acks, ANNOUNCEMENT_DELETED audit.
+  - UI: "New announcement" button (PenLine) in PageHeader (HR/Admin only, via useHrmsStore employee.role); Compose Dialog with title/body Inputs (live char counters + min-length hints + aria-invalid), Category Select (5 options with icons), Audience Select, Priority radiogroup chips (color-coded NORMAL/IMPORTANT/CRITICAL with explanatory hints), requiresAck Switch; Publish disabled until valid; on success → toast + invalidate ["announcements"]+["desk"] + form reset.
+  - Remove control on each card (HR/Admin only) → inline two-step confirm ("Delete"/"Keep") → deleteMutation + toast.
+- Seeded a longer showcase announcement ("Annual performance review cycle opens Monday", 600+ chars, IMPORTANT) to demonstrate Read more/Show less expansion; added to prisma/seed.ts AND surgically inserted into live DB via one-off script (no re-seed).
+- STYLING PASS — login page premium upgrade:
+  - Brand panel: animated aurora blobs (pulse 7s/9s offset), bottom fade gradient, logo shadow glow, LIVE clock chip (updates every second, ping dot + tabular-nums + long date), gradient text on "One Workspace." (sky-300→white), feature rows hover translate-x micro-interaction, brand stats strip (22 modules · 26 colleagues · 40+ API endpoints).
+  - Form panel: demo account cards now have role-tinted initials avatars (RP primary/AD success/PM warning/VS danger), hover lift (-translate-y-0.5 + shadow), arrow slide-in on hover; Sign In button gains ↵ kbd hint.
+- QA VERIFIED (browser): employee sees NO compose/remove controls; HR sees both; compose dialog renders all controls; publish disabled→enabled validation gating verified; published card shows IMPORTANT/Event/needs-ack correctly; delete two-step confirm works; RBAC API employee compose → 403 FORBIDDEN; Read more/Show less expansion verified; "Showing 5 of 5"; mobile 390px zero overflow; desk regression OK; zero console/page errors; dev.log clean (403 + 200s as expected).
+- VLM visual reviews: login page — "polished, high-fidelity design ready for production, no fixes required"; announcements feed — "clean, no critical defects".
+- Test data cleanup: both test announcements + 4 test audit rows removed via surgical Prisma script; DB left with 5 announcements (4 seed + 1 showcase).
+- bunx tsc --noEmit: 0 app errors. bun run lint: passes.
+
+Stage Summary:
+- 22 views / 42 API route groups. Announcements module now fully manageable by HR/Admin (compose + delete with audit trail), employees read-only with ack flow.
+- Login page elevated to premium marketing-grade design with live clock, stats strip and micro-interactions.
+
+Unresolved / Notes for next phase:
+- Compose currently publishes instantly; could add "scheduled/pinned" announcements or rich formatting (markdown) later.
+- widgetPrefs raw-SQL column migration still pending (low priority).
+- Consider Insights deep-link from the new performance-review announcement (already mentions the module in copy).

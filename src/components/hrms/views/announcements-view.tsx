@@ -4,13 +4,20 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Megaphone, BadgeCheck, CheckCircle2, RefreshCw, Loader2, Users, Building2,
-  Landmark, GraduationCap, CalendarHeart, Gift, BellRing,
+  Landmark, GraduationCap, CalendarHeart, Gift, BellRing, PenLine, Trash2, X, Sparkles,
 } from "lucide-react";
 import { apiGet, apiPost, ApiError } from "@/lib/hrms/client";
 import type { AnnouncementItem } from "@/lib/hrms/types";
 import { relativeTime } from "@/lib/hrms/time";
-import { PageHeader, EmptyState, DataState, StatusBadge } from "@/components/hrms/shared";
+import { useHrmsStore } from "@/lib/hrms/store";
+import { PageHeader, EmptyState, DataState } from "@/components/hrms/shared";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -37,10 +44,23 @@ const LEVEL_LABELS: Record<string, string> = {
   EMPLOYEE: "Direct",
 };
 
+type ComposeForm = {
+  title: string; body: string; level: string; category: string; priority: string; requiresAck: boolean;
+};
+
+const EMPTY_FORM: ComposeForm = {
+  title: "", body: "", level: "COMPANY", category: "GENERAL", priority: "NORMAL", requiresAck: false,
+};
+
 export default function AnnouncementsView() {
   const queryClient = useQueryClient();
   const [category, setCategory] = useState<string>("ALL");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const employee = useHrmsStore((s) => s.employee);
+  const canManage = employee?.role === "HR" || employee?.role === "ADMIN";
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [form, setForm] = useState<ComposeForm>(EMPTY_FORM);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["announcements"],
@@ -76,6 +96,36 @@ export default function AnnouncementsView() {
     },
   });
 
+  const titleValid = form.title.trim().length >= 5 && form.title.trim().length <= 120;
+  const bodyValid = form.body.trim().length >= 10 && form.body.trim().length <= 2000;
+
+  const composeMutation = useMutation({
+    mutationFn: () => apiPost<{ item: AnnouncementItem }>("/api/announcements", { action: "compose", ...form, title: form.title.trim(), body: form.body.trim() }),
+    onSuccess: (_data, _vars) => {
+      void queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      void queryClient.invalidateQueries({ queryKey: ["desk"] });
+      setComposeOpen(false);
+      setForm(EMPTY_FORM);
+      toast.success("Announcement published", { description: "It is now visible to the intended audience." });
+    },
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : "Could not publish the announcement. Please retry.");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => apiPost<{ deleted: boolean }>("/api/announcements", { action: "delete", id }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      void queryClient.invalidateQueries({ queryKey: ["desk"] });
+      setConfirmDelete(null);
+      toast.success("Announcement removed");
+    },
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : "Could not remove the announcement. Please retry.");
+    },
+  });
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -83,9 +133,16 @@ export default function AnnouncementsView() {
         title="Announcements"
         subtitle={needsAckCount > 0 ? `${needsAckCount} announcement${needsAckCount > 1 ? "s" : ""} need your acknowledgement` : "Company news, policies and events"}
         actions={
-          <Button variant="outline" size="sm" onClick={() => query.refetch()} disabled={query.isFetching}>
-            <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", query.isFetching && "animate-spin")} /> Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            {canManage ? (
+              <Button size="sm" onClick={() => { setForm(EMPTY_FORM); setComposeOpen(true); }}>
+                <PenLine className="mr-1.5 h-3.5 w-3.5" /> New announcement
+              </Button>
+            ) : null}
+            <Button variant="outline" size="sm" onClick={() => query.refetch()} disabled={query.isFetching}>
+              <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", query.isFetching && "animate-spin")} /> Refresh
+            </Button>
+          </div>
         }
       />
       <div className="h-1 w-28 rounded-full bg-gradient-to-r from-primary via-[var(--success)] to-[var(--warning)]" />
@@ -193,25 +250,52 @@ export default function AnnouncementsView() {
                             <>{a.acknowledged > 0 ? <>{a.acknowledged} acknowledged</> : "No acknowledgements yet"}</>
                           ) : "For your information"}
                         </span>
-                        {a.requiresAck ? (
-                          a.acked ? (
-                            <span className="flex items-center gap-1 text-xs font-medium text-success">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Acknowledged
-                            </span>
-                          ) : (
+                        <div className="flex items-center gap-1.5">
+                          {confirmDelete === a.id ? (
+                            <>
+                              <span className="text-[11px] font-medium text-muted-foreground">Remove this?</span>
+                              <Button
+                                size="sm" variant="destructive" className="h-7 gap-1 px-2 text-xs"
+                                disabled={deleteMutation.isPending && deleteMutation.variables === a.id}
+                                onClick={() => deleteMutation.mutate(a.id)}
+                              >
+                                {deleteMutation.isPending && deleteMutation.variables === a.id
+                                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                                Delete
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={() => setConfirmDelete(null)}>
+                                <X className="h-3.5 w-3.5" /> Keep
+                              </Button>
+                            </>
+                          ) : canManage ? (
                             <Button
-                              size="sm"
-                              className="h-7 gap-1.5 text-xs"
-                              disabled={ackMutation.isPending && ackMutation.variables === a.id}
-                              onClick={() => ackMutation.mutate(a.id)}
+                              size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-[var(--danger)]"
+                              onClick={() => setConfirmDelete(a.id)}
+                              aria-label={`Remove announcement ${a.title}`}
                             >
-                              {ackMutation.isPending && ackMutation.variables === a.id
-                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                : <BadgeCheck className="h-3.5 w-3.5" />}
-                              Acknowledge
+                              <Trash2 className="h-3.5 w-3.5" /> Remove
                             </Button>
-                          )
-                        ) : null}
+                          ) : null}
+                          {a.requiresAck ? (
+                            a.acked ? (
+                              <span className="flex items-center gap-1 text-xs font-medium text-success">
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Acknowledged
+                              </span>
+                            ) : (
+                              <Button
+                                size="sm"
+                                className="h-7 gap-1.5 text-xs"
+                                disabled={ackMutation.isPending && ackMutation.variables === a.id}
+                                onClick={() => ackMutation.mutate(a.id)}
+                              >
+                                {ackMutation.isPending && ackMutation.variables === a.id
+                                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  : <BadgeCheck className="h-3.5 w-3.5" />}
+                                Acknowledge
+                              </Button>
+                            )
+                          ) : null}
+                        </div>
                       </div>
                     </article>
                   );
@@ -226,6 +310,126 @@ export default function AnnouncementsView() {
           </div>
         ))}
       </DataState>
+
+      {/* compose dialog (HR / Admin) */}
+      <Dialog open={composeOpen} onOpenChange={(open) => { setComposeOpen(open); if (!open) composeMutation.reset(); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" /> New announcement
+            </DialogTitle>
+            <DialogDescription>
+              Publish a company update. It appears instantly on every employee's desk.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="ann-title">Title</Label>
+              <Input
+                id="ann-title" placeholder="e.g. Diwali bonus credited this week" maxLength={120}
+                value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                aria-invalid={form.title.length > 0 && !titleValid}
+              />
+              <p className={cn("text-[11px]", form.title.length > 0 && !titleValid ? "text-[var(--danger)]" : "text-muted-foreground")}>
+                {form.title.trim().length}/120 characters {form.title.length > 0 && form.title.trim().length < 5 ? "· at least 5 required" : ""}
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="ann-body">Message</Label>
+              <Textarea
+                id="ann-body" rows={5} placeholder="Share the details your team needs to know…" maxLength={2000}
+                value={form.body} onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
+                aria-invalid={form.body.length > 0 && !bodyValid}
+                className="resize-none"
+              />
+              <p className={cn("text-[11px]", form.body.length > 0 && !bodyValid ? "text-[var(--danger)]" : "text-muted-foreground")}>
+                {form.body.trim().length}/2000 characters {form.body.length > 0 && form.body.trim().length < 10 ? "· at least 10 required" : ""}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Category</Label>
+                <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(CATEGORY_META).map(([value, meta]) => (
+                      <SelectItem key={value} value={value}>
+                        <span className="flex items-center gap-2"><meta.icon className="h-3.5 w-3.5" /> {meta.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Audience</Label>
+                <Select value={form.level} onValueChange={(v) => setForm((f) => ({ ...f, level: v }))}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="COMPANY">All Company</SelectItem>
+                    <SelectItem value="BRANCH">Branch</SelectItem>
+                    <SelectItem value="DEPARTMENT">Department</SelectItem>
+                    <SelectItem value="EMPLOYEE">Direct</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Priority</Label>
+              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Priority">
+                {(Object.keys(PRIORITY_STYLES) as string[]).map((p) => (
+                  <button
+                    key={p} type="button" role="radio" aria-checked={form.priority === p}
+                    onClick={() => setForm((f) => ({ ...f, priority: p }))}
+                    className={cn(
+                      "rounded-lg border px-2 py-2 text-[11px] font-semibold uppercase tracking-wide transition-all",
+                      form.priority === p
+                        ? p === "CRITICAL"
+                          ? "border-[var(--danger)] bg-[var(--danger-soft)] text-[var(--danger)] shadow-sm"
+                          : p === "IMPORTANT"
+                            ? "border-[var(--warning)] bg-[var(--warning-soft)] text-[#B54708] shadow-sm"
+                            : "border-primary bg-primary/10 text-primary shadow-sm"
+                        : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
+              </div>
+              {form.priority !== "NORMAL" ? (
+                <p className="text-[11px] text-muted-foreground">
+                  {form.priority === "CRITICAL" ? "Critical items show a red accent on every card and sort first." : "Important items show an amber accent and sort above normal."}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+              <div className="space-y-0.5">
+                <Label htmlFor="ann-ack" className="text-xs">Require acknowledgement</Label>
+                <p className="text-[11px] text-muted-foreground">Employees must acknowledge before it clears from their desk.</p>
+              </div>
+              <Switch
+                id="ann-ack" checked={form.requiresAck}
+                onCheckedChange={(v) => setForm((f) => ({ ...f, requiresAck: v }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setComposeOpen(false)} disabled={composeMutation.isPending}>Cancel</Button>
+            <Button
+              onClick={() => composeMutation.mutate()}
+              disabled={!titleValid || !bodyValid || composeMutation.isPending}
+            >
+              {composeMutation.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Megaphone className="mr-1.5 h-3.5 w-3.5" />}
+              Publish announcement
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
