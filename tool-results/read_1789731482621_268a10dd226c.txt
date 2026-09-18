@@ -1,0 +1,677 @@
+     1→"use client";
+     2→
+     3→import { useMemo, useState } from "react";
+     4→import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+     5→import { apiGet, apiPost, ApiError } from "@/lib/hrms/client";
+     6→import {
+     7→  PageHeader, DataState, EmptyState, Initials, StatusBadge,
+     8→} from "@/components/hrms/shared";
+     9→import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+    10→import { Button } from "@/components/ui/button";
+    11→import { Badge } from "@/components/ui/badge";
+    12→import { Textarea } from "@/components/ui/textarea";
+    13→import {
+    14→  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+    15→} from "@/components/ui/dialog";
+    16→import { toast } from "sonner";
+    17→import {
+    18→  CheckCheck, ClipboardCheck, ThumbsUp, ThumbsDown, Loader2, UserX, Banknote,
+    19→  CalendarRange, Clock3, ArrowRight, MapPin, FileText,
+    20→} from "lucide-react";
+    21→import { useHrmsStore } from "@/lib/hrms/store";
+    22→import { fmtDate, fmtDateShort, fmtDuration, fmtINR, fmtTime } from "@/lib/hrms/time";
+    23→
+    24→type DecidableKind = "leave" | "duty" | "attendance" | "timesheet" | "expense";
+    25→type DecidableAction = "approve" | "reject" | "pay";
+    26→type TabKey = DecidableKind;
+    27→
+    28→interface EmployeeBrief { id: string; empCode: string; name: string; designation: string }
+    29→
+    30→interface LeaveItem {
+    31→  id: string; code: string; employee: EmployeeBrief;
+    32→  leaveType: string; leaveTypeCode: string; leaveTypeColor: string;
+    33→  fromDate: string; toDate: string; dayMode: string; days: number;
+    34→  reason: string; contactDuringLeave: string | null; substituteName: string | null;
+    35→  appliedAt: string; stage: "MANAGER" | "HR";
+    36→}
+    37→
+    38→interface DutyItem {
+    39→  id: string; code: string; employee: EmployeeBrief;
+    40→  type: string; subtype: string | null; fromDate: string; toDate: string | null;
+    41→  hours: number | null; reason: string; destination: string | null;
+    42→  clientName: string | null; address: string | null; appliedAt: string;
+    43→}
+    44→
+    45→interface AttendanceItem {
+    46→  id: string; code: string; employee: EmployeeBrief; date: string;
+    47→  currentCheckIn: string | null; currentCheckOut: string | null;
+    48→  requestedCheckIn: string | null; requestedCheckOut: string | null;
+    49→  reason: string; appliedAt: string;
+    50→}
+    51→
+    52→interface TimesheetGroup {
+    53→  weekStart: string; employee: EmployeeBrief;
+    54→  entries: { id: string; date: string; project: string; taskName: string | null; description: string | null; minutes: number; billable: boolean }[];
+    55→  totalMinutes: number; billableMinutes: number;
+    56→}
+    57→
+    58→interface ExpenseItem {
+    59→  id: string; code: string; employee: EmployeeBrief; category: string;
+    60→  expenseDate: string; amount: number; currency: string; merchant: string | null;
+    61→  project: string | null; description: string | null; status: string;
+    62→  submittedAt: string | null; stage: "MANAGER" | "FINANCE" | "PAY";
+    63→}
+    64→
+    65→interface ApprovalsCounts { leave: number; duty: number; attendance: number; timesheet: number; expense: number; total: number }
+    66→
+    67→interface ApprovalsResponse {
+    68→  tab: string;
+    69→  counts: ApprovalsCounts;
+    70→  items: unknown[];
+    71→}
+    72→
+    73→const TAB_LABELS: Record<TabKey, string> = {
+    74→  leave: "Leave",
+    75→  duty: "WFH & OD",
+    76→  attendance: "Attendance",
+    77→  timesheet: "Timesheets",
+    78→  expense: "Expenses",
+    79→};
+    80→
+    81→const KIND_LABELS: Record<DecidableKind, string> = {
+    82→  leave: "leave request",
+    83→  duty: "duty request",
+    84→  attendance: "regularization",
+    85→  timesheet: "timesheet",
+    86→  expense: "expense",
+    87→};
+    88→
+    89→const CATEGORY_LABELS: Record<string, string> = {
+    90→  TRAVEL: "Travel", FOOD: "Food", HOTEL: "Hotel", FUEL: "Fuel",
+    91→  CLIENT: "Client", SUPPLIES: "Supplies", OTHER: "Other",
+    92→};
+    93→
+    94→const DAY_MODE_LABELS: Record<string, string> = {
+    95→  FULL: "Full day", FIRST_HALF: "First half", SECOND_HALF: "Second half",
+    96→};
+    97→
+    98→interface DecisionDraft {
+    99→  kind: DecidableKind;
+   100→  action: DecidableAction;
+   101→  ids: string[];
+   102→  employeeName: string;
+   103→  code: string;
+   104→}
+   105→
+   106→function ActionButtons({ onApprove, onReject, onPay, disabled, payOnly }: {
+   107→  onApprove: () => void;
+   108→  onReject?: () => void;
+   109→  onPay?: () => void;
+   110→  disabled?: boolean;
+   111→  payOnly?: boolean;
+   112→}) {
+   113→  return (
+   114→    <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">
+   115→      {payOnly ? (
+   116→        <Button
+   117→          size="sm"
+   118→          variant="outline"
+   119→          className="h-8 gap-1.5 border-success/40 text-xs text-success hover:bg-success-soft"
+   120→          onClick={onPay}
+   121→          disabled={disabled}
+   122→        >
+   123→          <Banknote className="h-3.5 w-3.5" /> Mark paid
+   124→        </Button>
+   125→      ) : (
+   126→        <Button
+   127→          size="sm"
+   128→          variant="outline"
+   129→          className="h-8 gap-1.5 border-success/40 text-xs text-success hover:bg-success-soft"
+   130→          onClick={onApprove}
+   131→          disabled={disabled}
+   132→        >
+   133→          <ThumbsUp className="h-3.5 w-3.5" /> Approve
+   134→        </Button>
+   135→      )}
+   136→      {onReject ? (
+   137→        <Button
+   138→          size="sm"
+   139→          variant="outline"
+   140→          className="h-8 gap-1.5 border-danger/40 text-xs text-danger hover:bg-danger-soft"
+   141→          onClick={onReject}
+   142→          disabled={disabled}
+   143→        >
+   144→          <ThumbsDown className="h-3.5 w-3.5" /> Reject
+   145→        </Button>
+   146→      ) : null}
+   147→    </div>
+   148→  );
+   149→}
+   150→
+   151→export default function ApprovalsView() {
+   152→  const employee = useHrmsStore((s) => s.employee);
+   153→  const timeFormat = useHrmsStore((s) => s.timeFormat);
+   154→  const queryClient = useQueryClient();
+   155→  const isManager = employee?.role === "MANAGER" || employee?.role === "HR" || employee?.role === "ADMIN";
+   156→
+   157→  const [tab, setTab] = useState<TabKey>("leave");
+   158→  const [draft, setDraft] = useState<DecisionDraft | null>(null);
+   159→  const [comment, setComment] = useState("");
+   160→
+   161→  const approvalsQuery = useQuery({
+   162→    queryKey: ["approvals", tab],
+   163→    queryFn: () => apiGet<ApprovalsResponse>(`/api/approvals?tab=${tab}`),
+   164→    enabled: isManager,
+   165→  });
+   166→
+   167→  const decideMutation = useMutation({
+   168→    mutationFn: (vars: { kind: DecidableKind; ids: string[]; action: DecidableAction; comment?: string }) =>
+   169→      apiPost<{ processed: number }>("/api/approvals/decide", {
+   170→        kind: vars.kind,
+   171→        ids: vars.ids,
+   172→        action: vars.action,
+   173→        ...(vars.comment ? { comment: vars.comment } : {}),
+   174→      }),
+   175→    onSuccess: (res, vars) => {
+   176→      const verb = vars.action === "approve" ? "approved" : vars.action === "pay" ? "marked paid" : "rejected";
+   177→      toast.success(`${res.processed} item${res.processed === 1 ? "" : "s"} ${verb}`);
+   178→      setDraft(null);
+   179→      setComment("");
+   180→      void queryClient.invalidateQueries({ queryKey: ["approvals"] });
+   181→      void queryClient.invalidateQueries({ queryKey: ["desk"] });
+   182→    },
+   183→    onError: (err) => {
+   184→      toast.error(err instanceof ApiError ? err.message : "Decision could not be recorded");
+   185→    },
+   186→  });
+   187→
+   188→  const counts = approvalsQuery.data?.counts;
+   189→
+   190→  const items = useMemo(() => approvalsQuery.data?.items ?? [], [approvalsQuery.data]);
+   191→
+   192→  function openDecision(kind: DecidableKind, action: DecidableAction, ids: string[], employeeName: string, code: string) {
+   193→    setComment("");
+   194→    setDraft({ kind, action, ids, employeeName, code });
+   195→  }
+   196→
+   197→  function confirmDecision() {
+   198→    if (!draft) return;
+   199→    decideMutation.mutate({ kind: draft.kind, ids: draft.ids, action: draft.action, comment: comment.trim() || undefined });
+   200→  }
+   201→
+   202→  if (!isManager) {
+   203→    return (
+   204→      <div className="space-y-4">
+   205→        <PageHeader title="Approvals" subtitle="Pending requests from your team" icon={<ClipboardCheck className="h-4.5 w-4.5" />} />
+   206→        <EmptyState
+   207→          title="Approvals requires a manager role"
+   208→          message="Only managers, HR and admins can review team requests."
+   209→          icon={<UserX className="h-5 w-5" />}
+   210→        />
+   211→      </div>
+   212→    );
+   213→  }
+   214→
+   215→  return (
+   216→    <div className="space-y-4">
+   217→      <PageHeader
+   218→        title="Approvals"
+   219→        subtitle="Pending requests from your team"
+   220→        icon={<ClipboardCheck className="h-4.5 w-4.5" />}
+   221→        actions={
+   222→          counts ? (
+   223→            <Badge variant="outline" className="h-7 gap-1.5 bg-warning-soft px-2.5 text-xs text-[#B54708]">
+   224→              <Clock3 className="h-3.5 w-3.5" />
+   225→              {counts.total} pending
+   226→            </Badge>
+   227→          ) : null
+   228→        }
+   229→      />
+   230→
+   231→      <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
+   232→        <div className="w-full overflow-x-auto pb-1">
+   233→          <TabsList className="h-9 w-max">
+   234→            {(Object.keys(TAB_LABELS) as TabKey[]).map((key) => (
+   235→              <TabsTrigger key={key} value={key} className="gap-1.5 text-xs">
+   236→                {TAB_LABELS[key]}
+   237→                {counts ? (
+   238→                  <Badge
+   239→                    variant="secondary"
+   240→                    className={`ml-0.5 h-4 min-w-4 px-1 text-[10px] tabular ${counts[key] > 0 ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}
+   241→                  >
+   242→                    {counts[key]}
+   243→                  </Badge>
+   244→                ) : null}
+   245→              </TabsTrigger>
+   246→            ))}
+   247→          </TabsList>
+   248→        </div>
+   249→      </Tabs>
+   250→
+   251→      <DataState query={approvalsQuery}>
+   252→        {() => (
+   253→          <div className="max-h-[62vh] space-y-3 overflow-y-auto scroll-thin pr-1">
+   254→            {items.length === 0 ? (
+   255→              <EmptyState
+   256→                title="No pending approvals. Inbox zero!"
+   257→                message={`All ${TAB_LABELS[tab].toLowerCase()} requests from your team are handled.`}
+   258→                icon={<CheckCheck className="h-5 w-5" />}
+   259→              />
+   260→            ) : (
+   261→              items.map((item, index) => {
+   262→                const busy = decideMutation.isPending;
+   263→                if (tab === "leave") {
+   264→                  const l = item as LeaveItem;
+   265→                  return (
+   266→                    <LeaveRow
+   267→                      key={l.id}
+   268→                      item={l}
+   269→                      disabled={busy}
+   270→                      onApprove={() => openDecision("leave", "approve", [l.id], l.employee.name, l.code)}
+   271→                      onReject={() => openDecision("leave", "reject", [l.id], l.employee.name, l.code)}
+   272→                    />
+   273→                  );
+   274→                }
+   275→                if (tab === "duty") {
+   276→                  const d = item as DutyItem;
+   277→                  return (
+   278→                    <DutyRow
+   279→                      key={d.id}
+   280→                      item={d}
+   281→                      disabled={busy}
+   282→                      onApprove={() => openDecision("duty", "approve", [d.id], d.employee.name, d.code)}
+   283→                      onReject={() => openDecision("duty", "reject", [d.id], d.employee.name, d.code)}
+   284→                    />
+   285→                  );
+   286→                }
+   287→                if (tab === "attendance") {
+   288→                  const a = item as AttendanceItem;
+   289→                  return (
+   290→                    <AttendanceRow
+   291→                      key={a.id}
+   292→                      item={a}
+   293→                      timeFormat={timeFormat}
+   294→                      disabled={busy}
+   295→                      onApprove={() => openDecision("attendance", "approve", [a.id], a.employee.name, a.code)}
+   296→                      onReject={() => openDecision("attendance", "reject", [a.id], a.employee.name, a.code)}
+   297→                    />
+   298→                  );
+   299→                }
+   300→                if (tab === "timesheet") {
+   301→                  const g = item as TimesheetGroup;
+   302→                  return (
+   303→                    <TimesheetRow
+   304→                      key={`${g.weekStart}-${g.employee.id}-${index}`}
+   305→                      item={g}
+   306→                      disabled={busy}
+   307→                      onApprove={() => openDecision("timesheet", "approve", g.entries.map((e) => e.id), g.employee.name, `week of ${fmtDateShort(g.weekStart)}`)}
+   308→                      onReject={() => openDecision("timesheet", "reject", g.entries.map((e) => e.id), g.employee.name, `week of ${fmtDateShort(g.weekStart)}`)}
+   309→                    />
+   310→                  );
+   311→                }
+   312→                const x = item as ExpenseItem;
+   313→                return (
+   314→                  <ExpenseRow
+   315→                    key={x.id}
+   316→                    item={x}
+   317→                    disabled={busy}
+   318→                    onApprove={() => openDecision("expense", "approve", [x.id], x.employee.name, x.code)}
+   319→                    onReject={x.stage !== "PAY" ? () => openDecision("expense", "reject", [x.id], x.employee.name, x.code) : undefined}
+   320→                    onPay={() => openDecision("expense", "pay", [x.id], x.employee.name, x.code)}
+   321→                  />
+   322→                );
+   323→              })
+   324→            )}
+   325→          </div>
+   326→        )}
+   327→      </DataState>
+   328→
+   329→      {/* decision dialog */}
+   330→      <Dialog open={draft !== null} onOpenChange={(open) => { if (!open && !decideMutation.isPending) setDraft(null); }}>
+   331→        <DialogContent className="sm:max-w-md">
+   332→          {draft ? (
+   333→            <>
+   334→              <DialogHeader>
+   335→                <DialogTitle>
+   336→                  {draft.action === "approve" ? "Approve" : draft.action === "pay" ? "Mark as paid" : "Reject"}{" "}
+   337→                  {KIND_LABELS[draft.kind]}?
+   338→                </DialogTitle>
+   339→                <DialogDescription>
+   340→                  {draft.employeeName} · {draft.code}
+   341→                  {draft.action === "approve" && draft.kind === "leave" && draft.ids.length === 1
+   342→                    ? " — approving forwards the request to HR for final confirmation."
+   343→                    : ""}
+   344→                </DialogDescription>
+   345→              </DialogHeader>
+   346→              <div className="space-y-2">
+   347→                <Textarea
+   348→                  value={comment}
+   349→                  onChange={(e) => setComment(e.target.value)}
+   350→                  placeholder="Optional comment for the requester…"
+   351→                  className="min-h-20 text-sm"
+   352→                  maxLength={500}
+   353→                />
+   354→              </div>
+   355→              <DialogFooter className="gap-2">
+   356→                <Button
+   357→                  variant="ghost"
+   358→                  size="sm"
+   359→                  className="h-8 text-xs"
+   360→                  onClick={() => setDraft(null)}
+   361→                  disabled={decideMutation.isPending}
+   362→                >
+   363→                  Cancel
+   364→                </Button>
+   365→                <Button
+   366→                  size="sm"
+   367→                  className="h-8 gap-1.5 text-xs"
+   368→                  variant={draft.action === "reject" ? "destructive" : "default"}
+   369→                  onClick={confirmDecision}
+   370→                  disabled={decideMutation.isPending}
+   371→                >
+   372→                  {decideMutation.isPending ? (
+   373→                    <>
+   374→                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…
+   375→                    </>
+   376→                  ) : draft.action === "reject" ? (
+   377→                    <>
+   378→                      <ThumbsDown className="h-3.5 w-3.5" /> Confirm reject
+   379→                    </>
+   380→                  ) : draft.action === "pay" ? (
+   381→                    <>
+   382→                      <Banknote className="h-3.5 w-3.5" /> Confirm payment
+   383→                    </>
+   384→                  ) : (
+   385→                    <>
+   386→                      <ThumbsUp className="h-3.5 w-3.5" /> Confirm approval
+   387→                    </>
+   388→                  )}
+   389→                </Button>
+   390→              </DialogFooter>
+   391→            </>
+   392→          ) : null}
+   393→        </DialogContent>
+   394→      </Dialog>
+   395→    </div>
+   396→  );
+   397→}
+   398→
+   399→// ── row renderers ───────────────────────────────────────────
+   400→
+   401→function RowShell({ employee, code, topBadge, children, actions }: {
+   402→  employee: EmployeeBrief;
+   403→  code: string;
+   404→  topBadge?: React.ReactNode;
+   405→  children: React.ReactNode;
+   406→  actions: React.ReactNode;
+   407→}) {
+   408→  const [firstName, ...rest] = employee.name.split(" ");
+   409→  return (
+   410→    <div className="rounded-xl border border-border bg-card p-3.5 shadow-none">
+   411→      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+   412→        <div className="flex min-w-0 items-start gap-2.5">
+   413→          <Initials first={firstName} last={rest.join(" ") || " "} size="sm" />
+   414→          <div className="min-w-0">
+   415→            <div className="flex flex-wrap items-center gap-1.5">
+   416→              <p className="truncate text-sm font-semibold text-foreground">{employee.name}</p>
+   417→              <span className="font-mono text-[10px] text-muted-foreground">{code}</span>
+   418→              {topBadge}
+   419→            </div>
+   420→            <p className="truncate text-[11px] text-muted-foreground">{employee.designation}</p>
+   421→          </div>
+   422→        </div>
+   423→        {actions}
+   424→      </div>
+   425→      <div className="mt-3 border-t border-border pt-2.5">{children}</div>
+   426→    </div>
+   427→  );
+   428→}
+   429→
+   430→function LeaveRow({ item, disabled, onApprove, onReject }: {
+   431→  item: LeaveItem;
+   432→  disabled?: boolean;
+   433→  onApprove: () => void;
+   434→  onReject: () => void;
+   435→}) {
+   436→  return (
+   437→    <RowShell
+   438→      employee={item.employee}
+   439→      code={item.code}
+   440→      topBadge={
+   441→        item.stage === "HR" ? (
+   442→          <Badge variant="outline" className="bg-info-soft text-[10px] text-info">HR review</Badge>
+   443→        ) : null
+   444→      }
+   445→      actions={<ActionButtons onApprove={onApprove} onReject={onReject} disabled={disabled} />}
+   446→    >
+   447→      <div className="grid gap-x-4 gap-y-1.5 text-xs sm:grid-cols-2">
+   448→        <span className="flex items-center gap-1.5 text-muted-foreground">
+   449→          <CalendarRange className="h-3.5 w-3.5" />
+   450→          <span className="font-medium text-foreground">{fmtDateShort(item.fromDate)}</span>
+   451→          {item.toDate !== item.fromDate ? (
+   452→            <>
+   453→              <ArrowRight className="h-3 w-3" />
+   454→              <span className="font-medium text-foreground">{fmtDateShort(item.toDate)}</span>
+   455→            </>
+   456→          ) : null}
+   457→          <span>· {item.days} day{item.days === 1 ? "" : "s"}</span>
+   458→        </span>
+   459→        <span className="flex items-center gap-1.5 text-muted-foreground">
+   460→          <Badge
+   461→            variant="outline"
+   462→            className="px-1.5 py-0 text-[10px]"
+   463→            style={{ color: item.leaveTypeColor, borderColor: `${item.leaveTypeColor}55` }}
+   464→          >
+   465→            {item.leaveType}
+   466→          </Badge>
+   467→          <span>{DAY_MODE_LABELS[item.dayMode] ?? item.dayMode}</span>
+   468→        </span>
+   469→        <span className="flex items-start gap-1.5 text-muted-foreground sm:col-span-2">
+   470→          <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+   471→          <span className="text-foreground">{item.reason}</span>
+   472→        </span>
+   473→        {item.contactDuringLeave || item.substituteName ? (
+   474→          <span className="text-[11px] text-muted-foreground sm:col-span-2">
+   475→            {item.contactDuringLeave ? `Contact: ${item.contactDuringLeave}` : ""}
+   476→            {item.contactDuringLeave && item.substituteName ? " · " : ""}
+   477→            {item.substituteName ? `Substitute: ${item.substituteName}` : ""}
+   478→          </span>
+   479→        ) : null}
+   480→      </div>
+   481→      <p className="mt-1.5 text-[10px] text-muted-foreground">Applied {fmtDate(item.appliedAt)}</p>
+   482→    </RowShell>
+   483→  );
+   484→}
+   485→
+   486→function DutyRow({ item, disabled, onApprove, onReject }: {
+   487→  item: DutyItem;
+   488→  disabled?: boolean;
+   489→  onApprove: () => void;
+   490→  onReject: () => void;
+   491→}) {
+   492→  return (
+   493→    <RowShell
+   494→      employee={item.employee}
+   495→      code={item.code}
+   496→      topBadge={<StatusBadge status={item.type} label={item.type === "WFH" ? "WFH" : "On Duty"} />}
+   497→      actions={<ActionButtons onApprove={onApprove} onReject={onReject} disabled={disabled} />}
+   498→    >
+   499→      <div className="grid gap-x-4 gap-y-1.5 text-xs sm:grid-cols-2">
+   500→        <span className="flex items-center gap-1.5 text-muted-foreground">
+   501→          <CalendarRange className="h-3.5 w-3.5" />
+   502→          <span className="font-medium text-foreground">{fmtDateShort(item.fromDate)}</span>
+   503→          {item.toDate && item.toDate !== item.fromDate ? (
+   504→            <>
+   505→              <ArrowRight className="h-3 w-3" />
+   506→              <span className="font-medium text-foreground">{fmtDateShort(item.toDate)}</span>
+   507→            </>
+   508→          ) : null}
+   509→          {item.hours ? <span>· {item.hours}h</span> : null}
+   510→        </span>
+   511→        {item.subtype ? (
+   512→          <span className="text-muted-foreground">
+   513→            Type <span className="font-medium text-foreground">{item.subtype.replace(/_/g, " ")}</span>
+   514→          </span>
+   515→        ) : null}
+   516→        <span className="flex items-start gap-1.5 text-muted-foreground sm:col-span-2">
+   517→          <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+   518→          <span className="text-foreground">{item.reason}</span>
+   519→        </span>
+   520→        {item.destination || item.clientName || item.address ? (
+   521→          <span className="flex items-start gap-1.5 text-[11px] text-muted-foreground sm:col-span-2">
+   522→            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+   523→            {[item.destination, item.clientName, item.address].filter(Boolean).join(" · ")}
+   524→          </span>
+   525→        ) : null}
+   526→      </div>
+   527→      <p className="mt-1.5 text-[10px] text-muted-foreground">Applied {fmtDate(item.appliedAt)}</p>
+   528→    </RowShell>
+   529→  );
+   530→}
+   531→
+   532→function PunchLine({ label, from, to, timeFormat }: {
+   533→  label: string;
+   534→  from: string | null;
+   535→  to: string | null;
+   536→  timeFormat: "12h" | "24h";
+   537→}) {
+   538→  return (
+   539→    <span className="flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
+   540→      <span>{label}</span>
+   541→      <span className="font-medium tabular text-foreground">{fmtTime(from, timeFormat)}</span>
+   542→      <ArrowRight className="h-3 w-3" />
+   543→      <span className="font-medium tabular text-primary">{fmtTime(to, timeFormat)}</span>
+   544→    </span>
+   545→  );
+   546→}
+   547→
+   548→function AttendanceRow({ item, timeFormat, disabled, onApprove, onReject }: {
+   549→  item: AttendanceItem;
+   550→  timeFormat: "12h" | "24h";
+   551→  disabled?: boolean;
+   552→  onApprove: () => void;
+   553→  onReject: () => void;
+   554→}) {
+   555→  return (
+   556→    <RowShell
+   557→      employee={item.employee}
+   558→      code={item.code}
+   559→      actions={<ActionButtons onApprove={onApprove} onReject={onReject} disabled={disabled} />}
+   560→    >
+   561→      <div className="space-y-1.5">
+   562→        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+   563→          <CalendarRange className="h-3.5 w-3.5" />
+   564→          <span className="font-medium text-foreground">{fmtDate(item.date)}</span>
+   565→        </span>
+   566→        <PunchLine label="Current" from={item.currentCheckIn} to={item.currentCheckOut} timeFormat={timeFormat} />
+   567→        <PunchLine label="Requested" from={item.requestedCheckIn} to={item.requestedCheckOut} timeFormat={timeFormat} />
+   568→        <span className="flex items-start gap-1.5 text-xs text-muted-foreground">
+   569→          <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+   570→          <span className="text-foreground">{item.reason}</span>
+   571→        </span>
+   572→      </div>
+   573→      <p className="mt-1.5 text-[10px] text-muted-foreground">Applied {fmtDate(item.appliedAt)}</p>
+   574→    </RowShell>
+   575→  );
+   576→}
+   577→
+   578→function TimesheetRow({ item, disabled, onApprove, onReject }: {
+   579→  item: TimesheetGroup;
+   580→  disabled?: boolean;
+   581→  onApprove: () => void;
+   582→  onReject: () => void;
+   583→}) {
+   584→  return (
+   585→    <RowShell
+   586→      employee={item.employee}
+   587→      code={`Week of ${fmtDateShort(item.weekStart)}`}
+   588→      actions={<ActionButtons onApprove={onApprove} onReject={onReject} disabled={disabled} />}
+   589→    >
+   590→      <div className="space-y-1">
+   591→        {item.entries.map((e) => (
+   592→          <div key={e.id} className="flex items-center justify-between gap-3 text-xs">
+   593→            <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
+   594→              <span
+   595→                aria-label={e.billable ? "Billable" : "Non-billable"}
+   596→                className={`h-1.5 w-1.5 shrink-0 rounded-full ${e.billable ? "bg-success" : "bg-muted-foreground/40"}`}
+   597→              />
+   598→              <span className="truncate font-medium text-foreground">{e.project}</span>
+   599→              {e.taskName ? <span className="truncate">· {e.taskName}</span> : null}
+   600→              <span className="shrink-0 text-[10px]">{fmtDateShort(e.date)}</span>
+   601→            </span>
+   602→            <span className="shrink-0 tabular font-medium text-foreground">{fmtDuration(e.minutes)}</span>
+   603→          </div>
+   604→        ))}
+   605→      </div>
+   606→      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-2 text-[11px] text-muted-foreground">
+   607→        <span>
+   608→          Total <span className="font-semibold tabular text-foreground">{fmtDuration(item.totalMinutes)}</span>
+   609→        </span>
+   610→        <span>
+   611→          Billable <span className="font-semibold tabular text-success">{fmtDuration(item.billableMinutes)}</span>
+   612→        </span>
+   613→        <span>{item.entries.length} entries</span>
+   614→      </div>
+   615→    </RowShell>
+   616→  );
+   617→}
+   618→
+   619→function ExpenseRow({ item, disabled, onApprove, onReject, onPay }: {
+   620→  item: ExpenseItem;
+   621→  disabled?: boolean;
+   622→  onApprove: () => void;
+   623→  onReject?: () => void;
+   624→  onPay: () => void;
+   625→}) {
+   626→  const stageBadge =
+   627→    item.stage === "FINANCE" ? (
+   628→      <Badge variant="outline" className="bg-info-soft text-[10px] text-info">Awaiting finance</Badge>
+   629→    ) : item.stage === "PAY" ? (
+   630→      <Badge variant="outline" className="bg-warning-soft text-[10px] text-[#B54708]">Awaiting payment</Badge>
+   631→    ) : null;
+   632→
+   633→  return (
+   634→    <RowShell
+   635→      employee={item.employee}
+   636→      code={item.code}
+   637→      topBadge={stageBadge}
+   638→      actions={
+   639→        <ActionButtons
+   640→          onApprove={onApprove}
+   641→          onReject={onReject}
+   642→          onPay={onPay}
+   643→          disabled={disabled}
+   644→          payOnly={item.stage === "PAY"}
+   645→        />
+   646→      }
+   647→    >
+   648→      <div className="grid gap-x-4 gap-y-1.5 text-xs sm:grid-cols-2">
+   649→        <span className="flex items-center gap-1.5 text-muted-foreground">
+   650→          <Banknote className="h-3.5 w-3.5" />
+   651→          <span className="text-sm font-semibold tabular text-foreground">{fmtINR(item.amount)}</span>
+   652→          <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
+   653→            {CATEGORY_LABELS[item.category] ?? item.category}
+   654→          </Badge>
+   655→        </span>
+   656→        <span className="flex items-center gap-1.5 text-muted-foreground">
+   657→          <CalendarRange className="h-3.5 w-3.5" />
+   658→          <span className="font-medium text-foreground">{fmtDateShort(item.expenseDate)}</span>
+   659→          {item.merchant ? <span>· {item.merchant}</span> : null}
+   660→        </span>
+   661→        {item.project ? (
+   662→          <span className="text-[11px] text-muted-foreground">Project: <span className="text-foreground">{item.project}</span></span>
+   663→        ) : null}
+   664→        {item.description ? (
+   665→          <span className="flex items-start gap-1.5 text-[11px] text-muted-foreground sm:col-span-2">
+   666→            <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+   667→            <span className="text-foreground">{item.description}</span>
+   668→          </span>
+   669→        ) : null}
+   670→      </div>
+   671→      {item.submittedAt ? (
+   672→        <p className="mt-1.5 text-[10px] text-muted-foreground">Submitted {fmtDate(item.submittedAt)}</p>
+   673→      ) : null}
+   674→    </RowShell>
+   675→  );
+   676→}
+   677→

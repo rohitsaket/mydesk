@@ -1,0 +1,2002 @@
+     1→     1→# MASTER PROMPT — CORPORATE EMPLOYEE DESK / MY DESK HRMS WEBSITE
+     2→     2→
+     3→     3→You are a senior enterprise software architect, product designer, UI/UX engineer, full-stack developer, database architect, security engineer, QA engineer, DevOps engineer, and HR technology specialist.
+     4→     4→
+     5→     5→Your task is to design and build a complete, production-ready, enterprise-grade **Corporate Employee Desk / My Desk HRMS web application**.
+     6→     6→
+     7→     7→This must not be a basic attendance dashboard.
+     8→     8→
+     9→     9→It must become the employee’s complete daily workplace operating system where an employee can manage:
+    10→    10→
+    11→    11→* Attendance
+    12→    12→* Check-in / Check-out
+    13→    13→* Live working hours
+    14→    14→* Breaks
+    15→    15→* Shift
+    16→    16→* Overtime
+    17→    17→* Attendance regularization
+    18→    18→* Leave
+    19→    19→* WFH
+    20→    20→* On-duty requests
+    21→    21→* Tasks
+    22→    22→* Calendar
+    23→    23→* Meetings
+    24→    24→* Timesheets
+    25→    25→* Payroll
+    26→    26→* Payslips
+    27→    27→* Expenses
+    28→    28→* Reimbursements
+    29→    29→* Documents
+    30→    30→* HR requests
+    31→    31→* Announcements
+    32→    32→* Notifications
+    33→    33→* Approvals
+    34→    34→* Employee profile
+    35→    35→* Team information
+    36→    36→* Goals
+    37→    37→* Performance
+    38→    38→* Help desk
+    39→    39→* Company directory
+    40→    40→* Holidays
+    41→    41→* Birthday/work anniversary information
+    42→    42→* Personal productivity
+    43→    43→* Employee self-service
+    44→    44→
+    45→    45→The application should feel like a combination of:
+    46→    46→
+    47→    47→* Microsoft 365 employee portal
+    48→    48→* Workday
+    49→    49→* Darwinbox
+    50→    50→* Zoho People
+    51→    51→* SAP SuccessFactors
+    52→    52→* Rippling
+    53→    53→* BambooHR
+    54→    54→* Slack-style workplace productivity
+    55→    55→* Modern enterprise SaaS dashboard
+    56→    56→
+    57→    57→Do not copy any product directly.
+    58→    58→
+    59→    59→Create an original, clean, professional, premium enterprise UI.
+    60→    60→
+    61→    61→---
+    62→    62→
+    63→    63→# 1. PRODUCT NAME
+    64→    64→
+    65→    65→Use:
+    66→    66→
+    67→    67→**My Desk**
+    68→    68→
+    69→    69→Optional branding:
+    70→    70→
+    71→    71→**NISS HRMS — My Desk**
+    72→    72→
+    73→    73→Tagline:
+    74→    74→
+    75→    75→**Your Workday. One Workspace.**
+    76→    76→
+    77→    77→---
+    78→    78→
+    79→    79→# 2. PRIMARY OBJECTIVE
+    80→    80→
+    81→    81→The employee should be able to log in and immediately understand:
+    82→    82→
+    83→    83→* Am I checked in?
+    84→    84→* What is my shift?
+    85→    85→* How many hours have I worked?
+    86→    86→* How much break time have I taken?
+    87→    87→* When should I check out?
+    88→    88→* Am I late?
+    89→    89→* Am I working overtime?
+    90→    90→* What tasks do I have today?
+    91→    91→* What meetings are scheduled?
+    92→    92→* Who is absent from my team?
+    93→    93→* What approvals/actions require me?
+    94→    94→* Do I have pending HR requests?
+    95→    95→* What leave balance is available?
+    96→    96→* When is my next holiday?
+    97→    97→* What is my payroll status?
+    98→    98→* Are there announcements?
+    99→    99→* What should I do next?
+   100→   100→
+   101→   101→The employee must not need to visit multiple pages just to understand the current workday.
+   102→   102→
+   103→   103→---
+   104→   104→
+   105→   105→# 3. TARGET USERS
+   106→   106→
+   107→   107→Support:
+   108→   108→
+   109→   109→* Employee
+   110→   110→* Team Lead
+   111→   111→* Supervisor
+   112→   112→* Manager
+   113→   113→* HR Executive
+   114→   114→* HR Manager
+   115→   115→* Department Head
+   116→   116→* Branch Manager
+   117→   117→* Payroll User
+   118→   118→* Finance User
+   119→   119→* Administrator
+   120→   120→* Super Administrator
+   121→   121→
+   122→   122→However, **My Desk** should primarily remain an employee-centric experience.
+   123→   123→
+   124→   124→Managers should receive additional team widgets depending on permissions.
+   125→   125→
+   126→   126→---
+   127→   127→
+   128→   128→# 4. ENTERPRISE HIERARCHY
+   129→   129→
+   130→   130→Support:
+   131→   131→
+   132→   132→```text
+   133→   133→Group
+   134→   134→ └── Company
+   135→   135→      └── Branch
+   136→   136→           └── Location
+   137→   137→                └── Department
+   138→   138→                     └── Division
+   139→   139→                          └── Team
+   140→   140→                               └── Employee
+   141→   141→```
+   142→   142→
+   143→   143→Every attendance, leave, payroll, shift, task and workflow record must respect organizational scope.
+   144→   144→
+   145→   145→---
+   146→   146→
+   147→   147→# 5. RESPONSIVE TARGETS
+   148→   148→
+   149→   149→Build fully responsive UI for:
+   150→   150→
+   151→   151→* 2560px desktop
+   152→   152→* 1920px desktop
+   153→   153→* 1440px laptop
+   154→   154→* 1366px laptop
+   155→   155→* MacBook
+   156→   156→* 1280px
+   157→   157→* 1024px tablet landscape
+   158→   158→* 768px tablet
+   159→   159→* iPad
+   160→   160→* 430px mobile
+   161→   161→* 390px mobile
+   162→   162→* 375px mobile
+   163→   163→* iPhone
+   164→   164→* Android
+   165→   165→
+   166→   166→Never create horizontal page overflow except where intentionally required for data grids.
+   167→   167→
+   168→   168→---
+   169→   169→
+   170→   170→# 6. GLOBAL APPLICATION LAYOUT
+   171→   171→
+   172→   172→Desktop layout:
+   173→   173→
+   174→   174→```text
+   175→   175→┌──────────────────────────────────────────────────────────────┐
+   176→   176→│ Global Top Navigation                                       │
+   177→   177→├───────────────┬──────────────────────────────────────────────┤
+   178→   178→│               │                                              │
+   179→   179→│ Left Sidebar  │ Main Workspace                               │
+   180→   180→│               │                                              │
+   181→   181→│               │                                              │
+   182→   182→└───────────────┴──────────────────────────────────────────────┘
+   183→   183→```
+   184→   184→
+   185→   185→Top bar must contain:
+   186→   186→
+   187→   187→* Organization logo
+   188→   188→* Global search
+   189→   189→* Quick-create button
+   190→   190→* Current date
+   191→   191→* Notification center
+   192→   192→* Help
+   193→   193→* Employee avatar
+   194→   194→* Profile menu
+   195→   195→* Company/branch switcher if authorized
+   196→   196→
+   197→   197→Sidebar:
+   198→   198→
+   199→   199→* My Desk
+   200→   200→* Attendance
+   201→   201→* My Calendar
+   202→   202→* Leave
+   203→   203→* Timesheet
+   204→   204→* Tasks
+   205→   205→* Payroll
+   206→   206→* Expenses
+   207→   207→* Documents
+   208→   208→* Requests
+   209→   209→* Performance
+   210→   210→* Directory
+   211→   211→* Help Desk
+   212→   212→* Settings
+   213→   213→
+   214→   214→Managers additionally receive:
+   215→   215→
+   216→   216→* My Team
+   217→   217→* Team Attendance
+   218→   218→* Team Leave
+   219→   219→* Team Tasks
+   220→   220→* Approvals
+   221→   221→
+   222→   222→---
+   223→   223→
+   224→   224→# 7. MY DESK HOMEPAGE
+   225→   225→
+   226→   226→Route:
+   227→   227→
+   228→   228→```text
+   229→   229→/desk
+   230→   230→```
+   231→   231→
+   232→   232→This is the employee home page after login.
+   233→   233→
+   234→   234→Header:
+   235→   235→
+   236→   236→```text
+   237→   237→Good Morning, Rohit 👋
+   238→   238→
+   239→   239→Friday, 18 September 2026
+   240→   240→
+   241→   241→Here's your workday at a glance.
+   242→   242→```
+   243→   243→
+   244→   244→Show current employee context:
+   245→   245→
+   246→   246→* Profile photo
+   247→   247→* Name
+   248→   248→* Employee ID
+   249→   249→* Designation
+   250→   250→* Department
+   251→   251→* Branch
+   252→   252→* Reporting manager
+   253→   253→
+   254→   254→Do not make this area excessively large.
+   255→   255→
+   256→   256→---
+   257→   257→
+   258→   258→# 8. LIVE ATTENDANCE HERO CARD
+   259→   259→
+   260→   260→The most important component.
+   261→   261→
+   262→   262→Example:
+   263→   263→
+   264→   264→```text
+   265→   265→TODAY'S WORKDAY
+   266→   266→
+   267→   267→General Shift
+   268→   268→09:30 AM → 06:30 PM
+   269→   269→
+   270→   270→WORKING
+   271→   271→
+   272→   272→05 : 42 : 18
+   273→   273→
+   274→   274→Checked In
+   275→   275→09:27 AM
+   276→   276→
+   277→   277→Expected Checkout
+   278→   278→06:30 PM
+   279→   279→
+   280→   280→Shift Progress
+   281→   281→████████████████░░░░ 68%
+   282→   282→
+   283→   283→[Take Break]     [Check Out]
+   284→   284→```
+   285→   285→
+   286→   286→Support real-time states:
+   287→   287→
+   288→   288→* Not Checked In
+   289→   289→* Checked In
+   290→   290→* Working
+   291→   291→* On Break
+   292→   292→* Break Completed
+   293→   293→* Checked Out
+   294→   294→* Late
+   295→   295→* Early Check-in
+   296→   296→* Early Exit
+   297→   297→* Half Day
+   298→   298→* WFH
+   299→   299→* On Duty
+   300→   300→* Leave
+   301→   301→* Holiday
+   302→   302→* Weekly Off
+   303→   303→* Missing Punch
+   304→   304→* Overtime
+   305→   305→* Shift Completed
+   306→   306→
+   307→   307→Timer should update live every second without repeatedly querying the backend.
+   308→   308→
+   309→   309→Backend should provide authoritative timestamps.
+   310→   310→
+   311→   311→---
+   312→   312→
+   313→   313→# 9. ATTENDANCE CALCULATION ENGINE
+   314→   314→
+   315→   315→Track:
+   316→   316→
+   317→   317→```text
+   318→   318→scheduled_duration
+   319→   319→gross_work_duration
+   320→   320→net_work_duration
+   321→   321→break_duration
+   322→   322→paid_break_duration
+   323→   323→unpaid_break_duration
+   324→   324→late_duration
+   325→   325→early_exit_duration
+   326→   326→overtime_duration
+   327→   327→productive_duration
+   328→   328→```
+   329→   329→
+   330→   330→Formula example:
+   331→   331→
+   332→   332→```text
+   333→   333→gross duration =
+   334→   334→last activity - first check-in
+   335→   335→
+   336→   336→net work =
+   337→   337→gross duration - unpaid breaks
+   338→   338→
+   339→   339→remaining =
+   340→   340→required work duration - net work
+   341→   341→```
+   342→   342→
+   343→   343→Never calculate payroll-sensitive totals only in the frontend.
+   344→   344→
+   345→   345→Backend remains authoritative.
+   346→   346→
+   347→   347→---
+   348→   348→
+   349→   349→# 10. CHECK-IN FLOW
+   350→   350→
+   351→   351→Employee selects:
+   352→   352→
+   353→   353→```text
+   354→   354→[Check In]
+   355→   355→```
+   356→   356→
+   357→   357→Capture:
+   358→   358→
+   359→   359→* server timestamp
+   360→   360→* employee
+   361→   361→* company
+   362→   362→* branch
+   363→   363→* location
+   364→   364→* shift
+   365→   365→* device
+   366→   366→* browser
+   367→   367→* platform
+   368→   368→* IP metadata where legally permitted
+   369→   369→* attendance source
+   370→   370→
+   371→   371→Attendance source examples:
+   372→   372→
+   373→   373→* Web
+   374→   374→* Mobile
+   375→   375→* Biometric
+   376→   376→* Admin correction
+   377→   377→* API
+   378→   378→* Kiosk
+   379→   379→
+   380→   380→Optional policy-controlled fields:
+   381→   381→
+   382→   382→* Geolocation
+   383→   383→* selfie
+   384→   384→* office network validation
+   385→   385→* QR check-in
+   386→   386→
+   387→   387→Never silently collect location without appropriate authorization and policy.
+   388→   388→
+   389→   389→---
+   390→   390→
+   391→   391→# 11. CHECK-OUT FLOW
+   392→   392→
+   393→   393→Before checkout show:
+   394→   394→
+   395→   395→```text
+   396→   396→Today
+   397→   397→
+   398→   398→Check-in       09:27 AM
+   399→   399→Worked         08h 13m
+   400→   400→Break          00h 32m
+   401→   401→Required       08h 30m
+   402→   402→Remaining      00h 17m
+   403→   403→```
+   404→   404→
+   405→   405→If employee attempts early checkout:
+   406→   406→
+   407→   407→```text
+   408→   408→Your required working hours are not yet complete.
+   409→   409→
+   410→   410→Remaining: 17 minutes
+   411→   411→
+   412→   412→Reason for early checkout
+   413→   413→[______________________]
+   414→   414→
+   415→   415→[Cancel]
+   416→   416→[Continue Checkout]
+   417→   417→```
+   418→   418→
+   419→   419→Follow organization policy.
+   420→   420→
+   421→   421→---
+   422→   422→
+   423→   423→# 12. BREAK MANAGEMENT
+   424→   424→
+   425→   425→Support:
+   426→   426→
+   427→   427→* Tea Break
+   428→   428→* Lunch Break
+   429→   429→* Personal Break
+   430→   430→* Prayer Break
+   431→   431→* Official Break
+   432→   432→* Custom Break
+   433→   433→
+   434→   434→Example:
+   435→   435→
+   436→   436→```text
+   437→   437→BREAK
+   438→   438→
+   439→   439→Lunch Break
+   440→   440→
+   441→   441→00 : 18 : 42
+   442→   442→
+   443→   443→Started 01:05 PM
+   444→   444→
+   445→   445→[End Break]
+   446→   446→```
+   447→   447→
+   448→   448→Track:
+   449→   449→
+   450→   450→* Start time
+   451→   451→* End time
+   452→   452→* Duration
+   453→   453→* Paid/unpaid
+   454→   454→* Policy limit
+   455→   455→
+   456→   456→Warn employee when break exceeds allowance.
+   457→   457→
+   458→   458→---
+   459→   459→
+   460→   460→# 13. TODAY SUMMARY CARDS
+   461→   461→
+   462→   462→Display compact cards:
+   463→   463→
+   464→   464→```text
+   465→   465→Shift
+   466→   466→08h 30m
+   467→   467→
+   468→   468→Worked
+   469→   469→05h 42m
+   470→   470→
+   471→   471→Break
+   472→   472→00h 32m
+   473→   473→
+   474→   474→Remaining
+   475→   475→02h 48m
+   476→   476→
+   477→   477→Overtime
+   478→   478→00h 00m
+   479→   479→```
+   480→   480→
+   481→   481→Use responsive cards.
+   482→   482→
+   483→   483→Avoid huge dashboard cards.
+   484→   484→
+   485→   485→---
+   486→   486→
+   487→   487→# 14. WORKDAY TIMELINE
+   488→   488→
+   489→   489→Example:
+   490→   490→
+   491→   491→```text
+   492→   492→09:27 AM
+   493→   493→● Checked In
+   494→   494→
+   495→   495→11:35 AM
+   496→   496→● Tea Break
+   497→   497→
+   498→   498→11:50 AM
+   499→   499→● Resumed Work
+   500→   500→
+   501→   501→01:05 PM
+   502→   502→● Lunch Break
+   503→   503→
+   504→   504→01:38 PM
+   505→   505→● Resumed Work
+   506→   506→
+   507→   507→06:30 PM
+   508→   508→○ Expected Checkout
+   509→   509→```
+   510→   510→
+   511→   511→Include source information when useful.
+   512→   512→
+   513→   513→---
+   514→   514→
+   515→   515→# 15. WEEKLY WORKING HOURS
+   516→   516→
+   517→   517→Display:
+   518→   518→
+   519→   519→```text
+   520→   520→Monday      8h 41m
+   521→   521→Tuesday     8h 26m
+   522→   522→Wednesday   9h 04m
+   523→   523→Thursday    8h 37m
+   524→   524→Friday      5h 42m
+   525→   525→```
+   526→   526→
+   527→   527→Visualize:
+   528→   528→
+   529→   529→* required hours
+   530→   530→* actual hours
+   531→   531→* overtime
+   532→   532→* shortage
+   533→   533→
+   534→   534→Show:
+   535→   535→
+   536→   536→```text
+   537→   537→Required      42h 30m
+   538→   538→Completed     39h 12m
+   539→   539→Overtime       1h 34m
+   540→   540→Shortfall      3h 18m
+   541→   541→```
+   542→   542→
+   543→   543→---
+   544→   544→
+   545→   545→# 16. MONTHLY ATTENDANCE SUMMARY
+   546→   546→
+   547→   547→Cards:
+   548→   548→
+   549→   549→* Present
+   550→   550→* Absent
+   551→   551→* Leave
+   552→   552→* Half Day
+   553→   553→* Late
+   554→   554→* WFH
+   555→   555→* On Duty
+   556→   556→* Weekly Off
+   557→   557→* Holiday
+   558→   558→* Missing Punch
+   559→   559→* Overtime
+   560→   560→
+   561→   561→Example:
+   562→   562→
+   563→   563→```text
+   564→   564→Present        18
+   565→   565→Leave           2
+   566→   566→WFH             1
+   567→   567→Late            3
+   568→   568→Holiday         1
+   569→   569→Average Hours   8h 34m
+   570→   570→```
+   571→   571→
+   572→   572→---
+   573→   573→
+   574→   574→# 17. ATTENDANCE CALENDAR
+   575→   575→
+   576→   576→Create monthly visual attendance calendar.
+   577→   577→
+   578→   578→Example states:
+   579→   579→
+   580→   580→```text
+   581→   581→P  Present
+   582→   582→A  Absent
+   583→   583→L  Leave
+   584→   584→H  Holiday
+   585→   585→WO Weekly Off
+   586→   586→WFH
+   587→   587→OD On Duty
+   588→   588→½ Half Day
+   589→   589→MP Missing Punch
+   590→   590→```
+   591→   591→
+   592→   592→Hover/tap day:
+   593→   593→
+   594→   594→```text
+   595→   595→18 September
+   596→   596→
+   597→   597→Shift          General
+   598→   598→Check-in       09:27
+   599→   599→Check-out      18:41
+   600→   600→Worked         8h 42m
+   601→   601→Break          31m
+   602→   602→Overtime       12m
+   603→   603→Status         Present
+   604→   604→```
+   605→   605→
+   606→   606→---
+   607→   607→
+   608→   608→# 18. SHIFT MODULE
+   609→   609→
+   610→   610→Show:
+   611→   611→
+   612→   612→* Shift name
+   613→   613→* Shift code
+   614→   614→* Start time
+   615→   615→* End time
+   616→   616→* Grace period
+   617→   617→* Break allowance
+   618→   618→* Required hours
+   619→   619→* Weekly off
+   620→   620→* Current roster
+   621→   621→
+   622→   622→Support:
+   623→   623→
+   624→   624→* Fixed shift
+   625→   625→* Rotational shift
+   626→   626→* Flexible shift
+   627→   627→* Night shift
+   628→   628→* Split shift
+   629→   629→* Custom shift
+   630→   630→
+   631→   631→Include upcoming shifts.
+   632→   632→
+   633→   633→---
+   634→   634→
+   635→   635→# 19. LEAVE WIDGET
+   636→   636→
+   637→   637→Display available balances:
+   638→   638→
+   639→   639→```text
+   640→   640→Casual Leave       7
+   641→   641→Sick Leave         5
+   642→   642→Earned Leave      12
+   643→   643→Comp Off            2
+   644→   644→```
+   645→   645→
+   646→   646→Quick action:
+   647→   647→
+   648→   648→```text
+   649→   649→[Apply Leave]
+   650→   650→```
+   651→   651→
+   652→   652→Display:
+   653→   653→
+   654→   654→* Pending
+   655→   655→* Approved
+   656→   656→* Rejected
+   657→   657→* Cancelled
+   658→   658→* upcoming leave
+   659→   659→
+   660→   660→---
+   661→   661→
+   662→   662→# 20. APPLY LEAVE PAGE
+   663→   663→
+   664→   664→Route:
+   665→   665→
+   666→   666→```text
+   667→   667→/leave/apply
+   668→   668→```
+   669→   669→
+   670→   670→Form:
+   671→   671→
+   672→   672→* Leave type
+   673→   673→* From date
+   674→   674→* To date
+   675→   675→* Full/Half day
+   676→   676→* Number of days
+   677→   677→* Reason
+   678→   678→* Attachment
+   679→   679→* Contact during leave
+   680→   680→* Substitute employee if applicable
+   681→   681→
+   682→   682→Automatically calculate balance.
+   683→   683→
+   684→   684→Show approval chain.
+   685→   685→
+   686→   686→---
+   687→   687→
+   688→   688→# 21. WFH REQUEST
+   689→   689→
+   690→   690→Quick action:
+   691→   691→
+   692→   692→```text
+   693→   693→Request Work From Home
+   694→   694→```
+   695→   695→
+   696→   696→Fields:
+   697→   697→
+   698→   698→* Date
+   699→   699→* Duration
+   700→   700→* Reason
+   701→   701→* Address/location where required
+   702→   702→* Contact
+   703→   703→* Attachment
+   704→   704→
+   705→   705→Workflow:
+   706→   706→
+   707→   707→```text
+   708→   708→Employee
+   709→   709→↓
+   710→   710→Manager
+   711→   711→↓
+   712→   712→HR if policy requires
+   713→   713→```
+   714→   714→
+   715→   715→---
+   716→   716→
+   717→   717→# 22. ON-DUTY / BUSINESS VISIT
+   718→   718→
+   719→   719→Support:
+   720→   720→
+   721→   721→* Client visit
+   722→   722→* Field visit
+   723→   723→* Training
+   724→   724→* Conference
+   725→   725→* Official travel
+   726→   726→* Remote site work
+   727→   727→
+   728→   728→Capture:
+   729→   729→
+   730→   730→* Date/time
+   731→   731→* purpose
+   732→   732→* destination
+   733→   733→* client
+   734→   734→* notes
+   735→   735→* attachment
+   736→   736→
+   737→   737→---
+   738→   738→
+   739→   739→# 23. ATTENDANCE REGULARIZATION
+   740→   740→
+   741→   741→Allow employees to correct:
+   742→   742→
+   743→   743→* Missing check-in
+   744→   744→* Missing checkout
+   745→   745→* Incorrect timestamp
+   746→   746→* Wrong shift
+   747→   747→* Attendance discrepancy
+   748→   748→
+   749→   749→Form:
+   750→   750→
+   751→   751→```text
+   752→   752→Attendance Date
+   753→   753→Current Check-In
+   754→   754→Requested Check-In
+   755→   755→Current Check-Out
+   756→   756→Requested Check-Out
+   757→   757→Reason
+   758→   758→Attachment
+   759→   759→```
+   760→   760→
+   761→   761→Approval workflow required.
+   762→   762→
+   763→   763→Never directly overwrite original attendance history.
+   764→   764→
+   765→   765→Store:
+   766→   766→
+   767→   767→```text
+   768→   768→original value
+   769→   769→requested value
+   770→   770→approved value
+   771→   771→approved by
+   772→   772→approved at
+   773→   773→reason
+   774→   774→```
+   775→   775→
+   776→   776→---
+   777→   777→
+   778→   778→# 24. CALENDAR
+   779→   779→
+   780→   780→Route:
+   781→   781→
+   782→   782→```text
+   783→   783→/calendar
+   784→   784→```
+   785→   785→
+   786→   786→Calendar combines:
+   787→   787→
+   788→   788→* Employee shifts
+   789→   789→* Company holidays
+   790→   790→* Leave
+   791→   791→* Meetings
+   792→   792→* Tasks
+   793→   793→* Birthdays
+   794→   794→* Work anniversaries
+   795→   795→* Training
+   796→   796→* Payroll date
+   797→   797→* Company events
+   798→   798→* Attendance regularization reminders
+   799→   799→
+   800→   800→Views:
+   801→   801→
+   802→   802→* Day
+   803→   803→* Week
+   804→   804→* Month
+   805→   805→* Agenda
+   806→   806→
+   807→   807→---
+   808→   808→
+   809→   809→# 25. TODAY'S TASKS
+   810→   810→
+   811→   811→Widget:
+   812→   812→
+   813→   813→```text
+   814→   814→MY TASKS
+   815→   815→
+   816→   816→○ Client report
+   817→   817→Due 04:00 PM
+   818→   818→
+   819→   819→○ Verify payroll data
+   820→   820→High Priority
+   821→   821→
+   822→   822→✓ Team update
+   823→   823→Completed
+   824→   824→```
+   825→   825→
+   826→   826→Fields:
+   827→   827→
+   828→   828→* Title
+   829→   829→* Description
+   830→   830→* Due date
+   831→   831→* Priority
+   832→   832→* Project
+   833→   833→* Assigned by
+   834→   834→* Status
+   835→   835→* Progress
+   836→   836→
+   837→   837→Statuses:
+   838→   838→
+   839→   839→* To Do
+   840→   840→* In Progress
+   841→   841→* Blocked
+   842→   842→* Review
+   843→   843→* Completed
+   844→   844→
+   845→   845→---
+   846→   846→
+   847→   847→# 26. PERSONAL TIMESHEET
+   848→   848→
+   849→   849→Route:
+   850→   850→
+   851→   851→```text
+   852→   852→/timesheet
+   853→   853→```
+   854→   854→
+   855→   855→Allow:
+   856→   856→
+   857→   857→* Daily time entry
+   858→   858→* Project
+   859→   859→* Task
+   860→   860→* Start/end
+   861→   861→* Duration
+   862→   862→* Billable/non-billable
+   863→   863→* Description
+   864→   864→
+   865→   865→Weekly view:
+   866→   866→
+   867→   867→```text
+   868→   868→Project Alpha     18h
+   869→   869→Internal           8h
+   870→   870→Support            7h
+   871→   871→Training           4h
+   872→   872→```
+   873→   873→
+   874→   874→Submit timesheet for approval.
+   875→   875→
+   876→   876→---
+   877→   877→
+   878→   878→# 27. MY TEAM
+   879→   879→
+   880→   880→For managers only.
+   881→   881→
+   882→   882→Show:
+   883→   883→
+   884→   884→```text
+   885→   885→My Team
+   886→   886→
+   887→   887→12 Employees
+   888→   888→
+   889→   889→Working        8
+   890→   890→On Break       1
+   891→   891→Leave          1
+   892→   892→WFH            1
+   893→   893→Not Checked In 1
+   894→   894→```
+   895→   895→
+   896→   896→Employee row:
+   897→   897→
+   898→   898→```text
+   899→   899→Avatar
+   900→   900→Name
+   901→   901→Role
+   902→   902→Attendance
+   903→   903→Check-In
+   904→   904→Worked Hours
+   905→   905→Shift
+   906→   906→Status
+   907→   907→```
+   908→   908→
+   909→   909→Do not expose sensitive information without permission.
+   910→   910→
+   911→   911→---
+   912→   912→
+   913→   913→# 28. TEAM ATTENDANCE
+   914→   914→
+   915→   915→Manager view:
+   916→   916→
+   917→   917→```text
+   918→   918→Employee       In       Out      Worked    Status
+   919→   919→
+   920→   920→Amit           09:24    —        5h 48m    Working
+   921→   921→Neha           09:31    —        5h 41m    Working
+   922→   922→Rahul          —        —        —         Leave
+   923→   923→Priya          09:15    —        5h 57m    WFH
+   924→   924→```
+   925→   925→
+   926→   926→Filters:
+   927→   927→
+   928→   928→* company
+   929→   929→* branch
+   930→   930→* department
+   931→   931→* shift
+   932→   932→* status
+   933→   933→* date
+   934→   934→
+   935→   935→---
+   936→   936→
+   937→   937→# 29. APPROVAL INBOX
+   938→   938→
+   939→   939→Create unified approval center.
+   940→   940→
+   941→   941→Categories:
+   942→   942→
+   943→   943→* Leave
+   944→   944→* Attendance
+   945→   945→* WFH
+   946→   946→* On Duty
+   947→   947→* Expenses
+   948→   948→* Timesheets
+   949→   949→* Documents
+   950→   950→* Overtime
+   951→   951→
+   952→   952→Example:
+   953→   953→
+   954→   954→```text
+   955→   955→Approvals
+   956→   956→
+   957→   957→Leave              3
+   958→   958→Attendance          2
+   959→   959→Timesheet           5
+   960→   960→Expense             1
+   961→   961→```
+   962→   962→
+   963→   963→Manager can:
+   964→   964→
+   965→   965→* Approve
+   966→   966→* Reject
+   967→   967→* Request changes
+   968→   968→* Add comment
+   969→   969→
+   970→   970→Record audit history.
+   971→   971→
+   972→   972→---
+   973→   973→
+   974→   974→# 30. EMPLOYEE DIRECTORY
+   975→   975→
+   976→   976→Route:
+   977→   977→
+   978→   978→```text
+   979→   979→/directory
+   980→   980→```
+   981→   981→
+   982→   982→Search by:
+   983→   983→
+   984→   984→* employee
+   985→   985→* department
+   986→   986→* designation
+   987→   987→* company
+   988→   988→* branch
+   989→   989→* skill
+   990→   990→
+   991→   991→Employee card:
+   992→   992→
+   993→   993→```text
+   994→   994→Photo
+   995→   995→
+   996→   996→Rohit Patel
+   997→   997→Senior Developer
+   998→   998→
+   999→   999→Technology
+  1000→  1000→Surat Office
+  1001→  1001→
+  1002→  1002→Email
+  1003→  1003→Extension
+  1004→  1004→Teams/Chat
+  1005→  1005→```
+  1006→  1006→
+  1007→  1007→Respect privacy controls.
+  1008→  1008→
+  1009→  1009→---
+  1010→  1010→
+  1011→  1011→# 31. PROFILE PAGE
+  1012→  1012→
+  1013→  1013→Sections:
+  1014→  1014→
+  1015→  1015→* Personal
+  1016→  1016→* Employment
+  1017→  1017→* Organization
+  1018→  1018→* Contact
+  1019→  1019→* Bank
+  1020→  1020→* Tax
+  1021→  1021→* Emergency Contact
+  1022→  1022→* Documents
+  1023→  1023→* Skills
+  1024→  1024→* Education
+  1025→  1025→* Experience
+  1026→  1026→
+  1027→  1027→Allow editing only fields allowed by policy.
+  1028→  1028→
+  1029→  1029→Sensitive changes may require approval.
+  1030→  1030→
+  1031→  1031→---
+  1032→  1032→
+  1033→  1033→# 32. PAYROLL
+  1034→  1034→
+  1035→  1035→Route:
+  1036→  1036→
+  1037→  1037→```text
+  1038→  1038→/payroll
+  1039→  1039→```
+  1040→  1040→
+  1041→  1041→Show:
+  1042→  1042→
+  1043→  1043→* Current salary period
+  1044→  1044→* Payroll status
+  1045→  1045→* Net salary
+  1046→  1046→* Gross salary
+  1047→  1047→* Deductions
+  1048→  1048→* Attendance payable days
+  1049→  1049→* Overtime
+  1050→  1050→* Reimbursements
+  1051→  1051→* next payroll date
+  1052→  1052→
+  1053→  1053→Do not expose payroll if employee lacks permission.
+  1054→  1054→
+  1055→  1055→---
+  1056→  1056→
+  1057→  1057→# 33. PAYSLIPS
+  1058→  1058→
+  1059→  1059→Example:
+  1060→  1060→
+  1061→  1061→```text
+  1062→  1062→September 2026
+  1063→  1063→
+  1064→  1064→Gross Salary
+  1065→  1065→₹85,000
+  1066→  1066→
+  1067→  1067→Deductions
+  1068→  1068→₹9,420
+  1069→  1069→
+  1070→  1070→Net Pay
+  1071→  1071→₹75,580
+  1072→  1072→
+  1073→  1073→[View Payslip]
+  1074→  1074→[Download PDF]
+  1075→  1075→```
+  1076→  1076→
+  1077→  1077→Payslip history.
+  1078→  1078→
+  1079→  1079→---
+  1080→  1080→
+  1081→  1081→# 34. TAX CENTER
+  1082→  1082→
+  1083→  1083→Support jurisdiction-configurable tax workflows.
+  1084→  1084→
+  1085→  1085→For Indian HRMS implementations optionally support:
+  1086→  1086→
+  1087→  1087→* TDS
+  1088→  1088→* Form 16
+  1089→  1089→* investment declarations
+  1090→  1090→* tax regime selection
+  1091→  1091→* tax projections
+  1092→  1092→
+  1093→  1093→Keep tax rules configurable because laws change.
+  1094→  1094→
+  1095→  1095→---
+  1096→  1096→
+  1097→  1097→# 35. EXPENSES AND REIMBURSEMENTS
+  1098→  1098→
+  1099→  1099→Route:
+  1100→  1100→
+  1101→  1101→```text
+  1102→  1102→/expenses
+  1103→  1103→```
+  1104→  1104→
+  1105→  1105→Expense categories:
+  1106→  1106→
+  1107→  1107→* Travel
+  1108→  1108→* Food
+  1109→  1109→* Hotel
+  1110→  1110→* Fuel
+  1111→  1111→* Client expense
+  1112→  1112→* Office supplies
+  1113→  1113→* Other
+  1114→  1114→
+  1115→  1115→Fields:
+  1116→  1116→
+  1117→  1117→* date
+  1118→  1118→* category
+  1119→  1119→* amount
+  1120→  1120→* currency
+  1121→  1121→* merchant
+  1122→  1122→* project
+  1123→  1123→* description
+  1124→  1124→* receipt
+  1125→  1125→
+  1126→  1126→Statuses:
+  1127→  1127→
+  1128→  1128→* Draft
+  1129→  1129→* Submitted
+  1130→  1130→* Manager Approved
+  1131→  1131→* Finance Approved
+  1132→  1132→* Paid
+  1133→  1133→* Rejected
+  1134→  1134→
+  1135→  1135→---
+  1136→  1136→
+  1137→  1137→# 36. DOCUMENT CENTER
+  1138→  1138→
+  1139→  1139→Employee documents:
+  1140→  1140→
+  1141→  1141→* Appointment letter
+  1142→  1142→* Offer letter
+  1143→  1143→* ID card
+  1144→  1144→* Salary revision
+  1145→  1145→* Payslip
+  1146→  1146→* Tax documents
+  1147→  1147→* Company policies
+  1148→  1148→* Certificates
+  1149→  1149→* Employment letters
+  1150→  1150→
+  1151→  1151→Permissions required.
+  1152→  1152→
+  1153→  1153→Sensitive files should use secure access controls.
+  1154→  1154→
+  1155→  1155→---
+  1156→  1156→
+  1157→  1157→# 37. HR SERVICE REQUESTS
+  1158→  1158→
+  1159→  1159→Create HR ticket system.
+  1160→  1160→
+  1161→  1161→Examples:
+  1162→  1162→
+  1163→  1163→* Salary query
+  1164→  1164→* Attendance issue
+  1165→  1165→* Leave query
+  1166→  1166→* Payroll question
+  1167→  1167→* ID card
+  1168→  1168→* Experience certificate
+  1169→  1169→* Employee letter
+  1170→  1170→* IT support
+  1171→  1171→* Asset problem
+  1172→  1172→
+  1173→  1173→Ticket:
+  1174→  1174→
+  1175→  1175→```text
+  1176→  1176→Ticket #HR-1042
+  1177→  1177→
+  1178→  1178→Category
+  1179→  1179→Attendance
+  1180→  1180→
+  1181→  1181→Priority
+  1182→  1182→Normal
+  1183→  1183→
+  1184→  1184→Status
+  1185→  1185→In Progress
+  1186→  1186→
+  1187→  1187→Assigned
+  1188→  1188→HR Operations
+  1189→  1189→```
+  1190→  1190→
+  1191→  1191→---
+  1192→  1192→
+  1193→  1193→# 38. ANNOUNCEMENTS
+  1194→  1194→
+  1195→  1195→Desk widget:
+  1196→  1196→
+  1197→  1197→```text
+  1198→  1198→Company Announcements
+  1199→  1199→
+  1200→  1200→• Office closed September 24
+  1201→  1201→• Health insurance enrollment
+  1202→  1202→• Diwali celebration registration
+  1203→  1203→```
+  1204→  1204→
+  1205→  1205→Support:
+  1206→  1206→
+  1207→  1207→* company-level
+  1208→  1208→* branch-level
+  1209→  1209→* department-level
+  1210→  1210→* employee-targeted
+  1211→  1211→
+  1212→  1212→---
+  1213→  1213→
+  1214→  1214→# 39. NOTIFICATION CENTER
+  1215→  1215→
+  1216→  1216→Notifications:
+  1217→  1217→
+  1218→  1218→* Leave approved
+  1219→  1219→* Attendance regularization required
+  1220→  1220→* Missing checkout
+  1221→  1221→* Task assigned
+  1222→  1222→* Payroll processed
+  1223→  1223→* Payslip generated
+  1224→  1224→* New announcement
+  1225→  1225→* Expense approved
+  1226→  1226→* Shift changed
+  1227→  1227→* Manager comment
+  1228→  1228→
+  1229→  1229→Support:
+  1230→  1230→
+  1231→  1231→* unread/read
+  1232→  1232→* filtering
+  1233→  1233→* deep links
+  1234→  1234→
+  1235→  1235→---
+  1236→  1236→
+  1237→  1237→# 40. QUICK ACTION PANEL
+  1238→  1238→
+  1239→  1239→Allow configurable shortcuts:
+  1240→  1240→
+  1241→  1241→```text
+  1242→  1242→+ Apply Leave
+  1243→  1243→+ Regularize Attendance
+  1244→  1244→+ Request WFH
+  1245→  1245→+ On Duty
+  1246→  1246→+ Add Timesheet
+  1247→  1247→+ Add Expense
+  1248→  1248→+ Raise HR Ticket
+  1249→  1249→```
+  1250→  1250→
+  1251→  1251→---
+  1252→  1252→
+  1253→  1253→# 41. UPCOMING WIDGET
+  1254→  1254→
+  1255→  1255→Show:
+  1256→  1256→
+  1257→  1257→```text
+  1258→  1258→Upcoming
+  1259→  1259→
+  1260→  1260→10:30 AM
+  1261→  1261→Daily Standup
+  1262→  1262→
+  1263→  1263→02:00 PM
+  1264→  1264→Client Meeting
+  1265→  1265→
+  1266→  1266→21 Sep
+  1267→  1267→Team Review
+  1268→  1268→
+  1269→  1269→24 Sep
+  1270→  1270→Company Holiday
+  1271→  1271→```
+  1272→  1272→
+  1273→  1273→---
+  1274→  1274→
+  1275→  1275→# 42. HOLIDAY WIDGET
+  1276→  1276→
+  1277→  1277→Show next holiday.
+  1278→  1278→
+  1279→  1279→```text
+  1280→  1280→Next Holiday
+  1281→  1281→
+  1282→  1282→24 September
+  1283→  1283→Company Holiday
+  1284→  1284→
+  1285→  1285→6 days remaining
+  1286→  1286→```
+  1287→  1287→
+  1288→  1288→---
+  1289→  1289→
+  1290→  1290→# 43. TEAM BIRTHDAYS AND ANNIVERSARIES
+  1291→  1291→
+  1292→  1292→Optional configurable widget.
+  1293→  1293→
+  1294→  1294→Example:
+  1295→  1295→
+  1296→  1296→```text
+  1297→  1297→Today
+  1298→  1298→
+  1299→  1299→🎂 Neha Sharma
+  1300→  1300→5th Work Anniversary
+  1301→  1301→```
+  1302→  1302→
+  1303→  1303→Privacy settings required.
+  1304→  1304→
+  1305→  1305→---
+  1306→  1306→
+  1307→  1307→# 44. GOALS AND PERFORMANCE
+  1308→  1308→
+  1309→  1309→Widget:
+  1310→  1310→
+  1311→  1311→```text
+  1312→  1312→Quarter Goals
+  1313→  1313→
+  1314→  1314→Revenue Dashboard
+  1315→  1315→75%
+  1316→  1316→
+  1317→  1317→Automation Project
+  1318→  1318→60%
+  1319→  1319→
+  1320→  1320→Certification
+  1321→  1321→100%
+  1322→  1322→```
+  1323→  1323→
+  1324→  1324→Performance module route:
+  1325→  1325→
+  1326→  1326→```text
+  1327→  1327→/performance
+  1328→  1328→```
+  1329→  1329→
+  1330→  1330→---
+  1331→  1331→
+  1332→  1332→# 45. UI DESIGN LANGUAGE
+  1333→  1333→
+  1334→  1334→Use professional enterprise styling.
+  1335→  1335→
+  1336→  1336→Visual characteristics:
+  1337→  1337→
+  1338→  1338→* clean
+  1339→  1339→* minimal
+  1340→  1340→* calm
+  1341→  1341→* structured
+  1342→  1342→* high information density
+  1343→  1343→* premium SaaS feel
+  1344→  1344→
+  1345→  1345→Avoid:
+  1346→  1346→
+  1347→  1347→* oversized cards
+  1348→  1348→* huge text
+  1349→  1349→* excessive gradients
+  1350→  1350→* childish illustrations
+  1351→  1351→* excessive animations
+  1352→  1352→* excessive rounded corners
+  1353→  1353→
+  1354→  1354→---
+  1355→  1355→
+  1356→  1356→# 46. COLOR SYSTEM
+  1357→  1357→
+  1358→  1358→Use design tokens.
+  1359→  1359→
+  1360→  1360→Example light theme:
+  1361→  1361→
+  1362→  1362→```text
+  1363→  1363→Background
+  1364→  1364→#F7F8FA
+  1365→  1365→
+  1366→  1366→Surface
+  1367→  1367→#FFFFFF
+  1368→  1368→
+  1369→  1369→Primary
+  1370→  1370→#2563EB
+  1371→  1371→
+  1372→  1372→Text Primary
+  1373→  1373→#101828
+  1374→  1374→
+  1375→  1375→Text Secondary
+  1376→  1376→#667085
+  1377→  1377→
+  1378→  1378→Border
+  1379→  1379→#EAECF0
+  1380→  1380→
+  1381→  1381→Success
+  1382→  1382→#12B76A
+  1383→  1383→
+  1384→  1384→Warning
+  1385→  1385→#F79009
+  1386→  1386→
+  1387→  1387→Danger
+  1388→  1388→#F04438
+  1389→  1389→```
+  1390→  1390→
+  1391→  1391→Support dark mode through tokens.
+  1392→  1392→
+  1393→  1393→---
+  1394→  1394→
+  1395→  1395→# 47. TYPOGRAPHY
+  1396→  1396→
+  1397→  1397→Recommended:
+  1398→  1398→
+  1399→  1399→* Inter
+  1400→  1400→* Geist
+  1401→  1401→* SF Pro equivalent
+  1402→  1402→* system font fallback
+  1403→  1403→
+  1404→  1404→Hierarchy:
+  1405→  1405→
+  1406→  1406→```text
+  1407→  1407→Page title        24px
+  1408→  1408→Section title     18px
+  1409→  1409→Card title        14–16px
+  1410→  1410→Body              14px
+  1411→  1411→Secondary         12–13px
+  1412→  1412→```
+  1413→  1413→
+  1414→  1414→Maintain readability.
+  1415→  1415→
+  1416→  1416→---
+  1417→  1417→
+  1418→  1418→# 48. CARD SYSTEM
+  1419→  1419→
+  1420→  1420→Cards should use:
+  1421→  1421→
+  1422→  1422→```text
+  1423→  1423→border-radius: 10–12px
+  1424→  1424→border: 1px solid neutral border
+  1425→  1425→minimal shadow
+  1426→  1426→padding: 16–20px
+  1427→  1427→```
+  1428→  1428→
+  1429→  1429→Avoid excessive elevation.
+  1430→  1430→
+  1431→  1431→---
+  1432→  1432→
+  1433→  1433→# 49. TABLE SYSTEM
+  1434→  1434→
+  1435→  1435→Enterprise tables need:
+  1436→  1436→
+  1437→  1437→* Search
+  1438→  1438→* Sort
+  1439→  1439→* Filters
+  1440→  1440→* Column visibility
+  1441→  1441→* Pagination
+  1442→  1442→* Row density
+  1443→  1443→* Export
+  1444→  1444→* Sticky headers
+  1445→  1445→* Responsive behavior
+  1446→  1446→* Empty states
+  1447→  1447→* Loading states
+  1448→  1448→* Error states
+  1449→  1449→
+  1450→  1450→For large datasets, support:
+  1451→  1451→
+  1452→  1452→* server pagination
+  1453→  1453→* virtualization where useful
+  1454→  1454→
+  1455→  1455→---
+  1456→  1456→
+  1457→  1457→# 50. MOBILE UX
+  1458→  1458→
+  1459→  1459→Mobile bottom navigation:
+  1460→  1460→
+  1461→  1461→```text
+  1462→  1462→Desk
+  1463→  1463→Attendance
+  1464→  1464→Calendar
+  1465→  1465→Requests
+  1466→  1466→More
+  1467→  1467→```
+  1468→  1468→
+  1469→  1469→Mobile attendance card must remain primary.
+  1470→  1470→
+  1471→  1471→Example:
+  1472→  1472→
+  1473→  1473→```text
+  1474→  1474→Good Morning Rohit
+  1475→  1475→
+  1476→  1476→General Shift
+  1477→  1477→09:30 → 18:30
+  1478→  1478→
+  1479→  1479→WORKING
+  1480→  1480→
+  1481→  1481→05:42:18
+  1482→  1482→
+  1483→  1483→Check In
+  1484→  1484→09:27
+  1485→  1485→
+  1486→  1486→Worked
+  1487→  1487→05:42
+  1488→  1488→
+  1489→  1489→Break
+  1490→  1490→00:32
+  1491→  1491→
+  1492→  1492→Remaining
+  1493→  1493→02:48
+  1494→  1494→
+  1495→  1495→[Break]
+  1496→  1496→
+  1497→  1497→[Check Out]
+  1498→  1498→```
+  1499→  1499→
+  1500→  1500→Stack secondary widgets.
+  1501→  1501→
+  1502→  1502→---
+  1503→  1503→
+  1504→  1504→# 51. MOBILE QUICK ACTIONS
+  1505→  1505→
+  1506→  1506→Display horizontally scrollable or grid:
+  1507→  1507→
+  1508→  1508→```text
+  1509→  1509→Leave
+  1510→  1510→WFH
+  1511→  1511→Timesheet
+  1512→  1512→Expense
+  1513→  1513→Regularize
+  1514→  1514→Help Desk
+  1515→  1515→```
+  1516→  1516→
+  1517→  1517→---
+  1518→  1518→
+  1519→  1519→# 52. FRONTEND STACK
+  1520→  1520→
+  1521→  1521→Preferred:
+  1522→  1522→
+  1523→  1523→```text
+  1524→  1524→React
+  1525→  1525→TypeScript
+  1526→  1526→Vite
+  1527→  1527→
+  1528→  1528→React Router
+  1529→  1529→TanStack Query
+  1530→  1530→
+  1531→  1531→Zustand
+  1532→  1532→
+  1533→  1533→Tailwind CSS
+  1534→  1534→
+  1535→  1535→React Hook Form
+  1536→  1536→Zod
+  1537→  1537→
+  1538→  1538→Axios or equivalent typed API layer
+  1539→  1539→
+  1540→  1540→Recharts / ECharts
+  1541→  1541→
+  1542→  1542→Lucide Icons
+  1543→  1543→```
+  1544→  1544→
+  1545→  1545→Optional:
+  1546→  1546→
+  1547→  1547→```text
+  1548→  1548→Framer Motion
+  1549→  1549→```
+  1550→  1550→
+  1551→  1551→Use animation sparingly.
+  1552→  1552→
+  1553→  1553→---
+  1554→  1554→
+  1555→  1555→# 53. FRONTEND ARCHITECTURE
+  1556→  1556→
+  1557→  1557→Example:
+  1558→  1558→
+  1559→  1559→```text
+  1560→  1560→src/
+  1561→  1561→ ├── app/
+  1562→  1562→ ├── layouts/
+  1563→  1563→ ├── modules/
+  1564→  1564→ │    ├── desk/
+  1565→  1565→ │    ├── attendance/
+  1566→  1566→ │    ├── shifts/
+  1567→  1567→ │    ├── leave/
+  1568→  1568→ │    ├── tasks/
+  1569→  1569→ │    ├── calendar/
+  1570→  1570→ │    ├── payroll/
+  1571→  1571→ │    ├── timesheet/
+  1572→  1572→ │    ├── expenses/
+  1573→  1573→ │    ├── documents/
+  1574→  1574→ │    ├── requests/
+  1575→  1575→ │    └── profile/
+  1576→  1576→ ├── components/
+  1577→  1577→ ├── hooks/
+  1578→  1578→ ├── services/
+  1579→  1579→ ├── stores/
+  1580→  1580→ ├── utils/
+  1581→  1581→ ├── types/
+  1582→  1582→ └── styles/
+  1583→  1583→```
+  1584→  1584→
+  1585→  1585→Avoid giant files.
+  1586→  1586→
+  1587→  1587→---
+  1588→  1588→
+  1589→  1589→# 54. BACKEND
+  1590→  1590→
+  1591→  1591→Preferred:
+  1592→  1592→
+  1593→  1593→```text
+  1594→  1594→Node.js
+  1595→  1595→Express.js
+  1596→  1596→TypeScript
+  1597→  1597→```
+  1598→  1598→
+  1599→  1599→Alternative:
+  1600→  1600→
+  1601→  1601→* NestJS if project architecture already uses it.
+  1602→  1602→
+  1603→  1603→Use:
+  1604→  1604→
+  1605→  1605→```text
+  1606→  1606→PostgreSQL
+  1607→  1607→Redis
+  1608→  1608→```
+  1609→  1609→
+  1610→  1610→---
+  1611→  1611→
+  1612→  1612→# 55. BACKEND ARCHITECTURE
+  1613→  1613→
+  1614→  1614→Example:
+  1615→  1615→
+  1616→  1616→```text
+  1617→  1617→modules/
+  1618→  1618→ ├── auth
+  1619→  1619→ ├── employees
+  1620→  1620→ ├── attendance
+  1621→  1621→ ├── shifts
+  1622→  1622→ ├── leave
+  1623→  1623→ ├── timesheets
+  1624→  1624→ ├── tasks
+  1625→  1625→ ├── calendar
+  1626→  1626→ ├── payroll
+  1627→  1627→ ├── expenses
+  1628→  1628→ ├── notifications
+  1629→  1629→ ├── documents
+  1630→  1630→ ├── approvals
+  1631→  1631→ └── desk
+  1632→  1632→```
+  1633→  1633→
+  1634→  1634→Each module:
+  1635→  1635→
+  1636→  1636→```text
+  1637→  1637→controller
+  1638→  1638→service
+  1639→  1639→repository
+  1640→  1640→validators
+  1641→  1641→types
+  1642→  1642→routes
+  1643→  1643→policy
+  1644→  1644→tests
+  1645→  1645→```
+  1646→  1646→
+  1647→  1647→---
+  1648→  1648→
+  1649→  1649→# 56. DATABASE
+  1650→  1650→
+  1651→  1651→Core tables:
+  1652→  1652→
+  1653→  1653→```text
+  1654→  1654→users
+  1655→  1655→employees
+  1656→  1656→
+  1657→  1657→groups
+  1658→  1658→companies
+  1659→  1659→branches
+  1660→  1660→locations
+  1661→  1661→departments
+  1662→  1662→teams
+  1663→  1663→
+  1664→  1664→shifts
+  1665→  1665→shift_assignments
+  1666→  1666→
+  1667→  1667→attendance_sessions
+  1668→  1668→attendance_events
+  1669→  1669→attendance_breaks
+  1670→  1670→attendance_regularizations
+  1671→  1671→
+  1672→  1672→leave_types
+  1673→  1673→leave_balances
+  1674→  1674→leave_requests
+  1675→  1675→
+  1676→  1676→wfh_requests
+  1677→  1677→on_duty_requests
+  1678→  1678→
+  1679→  1679→timesheets
+  1680→  1680→timesheet_entries
+  1681→  1681→
+  1682→  1682→tasks
+  1683→  1683→task_assignments
+  1684→  1684→
+  1685→  1685→calendar_events
+  1686→  1686→
+  1687→  1687→payroll_periods
+  1688→  1688→payroll_records
+  1689→  1689→payslips
+  1690→  1690→
+  1691→  1691→expenses
+  1692→  1692→expense_items
+  1693→  1693→
+  1694→  1694→documents
+  1695→  1695→
+  1696→  1696→notifications
+  1697→  1697→
+  1698→  1698→announcements
+  1699→  1699→
+  1700→  1700→approval_requests
+  1701→  1701→approval_steps
+  1702→  1702→
+  1703→  1703→audit_logs
+  1704→  1704→```
+  1705→  1705→
+  1706→  1706→---
+  1707→  1707→
+  1708→  1708→# 57. ATTENDANCE DATA MODEL
+  1709→  1709→
+  1710→  1710→Never store only:
+  1711→  1711→
+  1712→  1712→```text
+  1713→  1713→check_in
+  1714→  1714→check_out
+  1715→  1715→```
+  1716→  1716→
+  1717→  1717→Maintain immutable events.
+  1718→  1718→
+  1719→  1719→Example:
+  1720→  1720→
+  1721→  1721→```text
+  1722→  1722→attendance_events
+  1723→  1723→
+  1724→  1724→id
+  1725→  1725→employee_id
+  1726→  1726→date
+  1727→  1727→
+  1728→  1728→event_type
+  1729→  1729→
+  1730→  1730→CHECK_IN
+  1731→  1731→BREAK_START
+  1732→  1732→BREAK_END
+  1733→  1733→CHECK_OUT
+  1734→  1734→
+  1735→  1735→timestamp
+  1736→  1736→source
+  1737→  1737→device_id
+  1738→  1738→ip_metadata
+  1739→  1739→metadata
+  1740→  1740→created_at
+  1741→  1741→```
+  1742→  1742→
+  1743→  1743→Attendance summary is derived and persisted safely.
+  1744→  1744→
+  1745→  1745→---
+  1746→  1746→
+  1747→  1747→# 58. TIMEZONE DESIGN
+  1748→  1748→
+  1749→  1749→Never assume all employees use same timezone.
+  1750→  1750→
+  1751→  1751→Store timestamps using UTC.
+  1752→  1752→
+  1753→  1753→Store organization/location timezone separately.
+  1754→  1754→
+  1755→  1755→Render according to relevant location.
+  1756→  1756→
+  1757→  1757→Handle:
+  1758→  1758→
+  1759→  1759→* DST
+  1760→  1760→* overnight shifts
+  1761→  1761→* shifts crossing midnight
+  1762→  1762→* timezone travel
+  1763→  1763→* remote employee timezone policies
+  1764→  1764→
+  1765→  1765→---
+  1766→  1766→
+  1767→  1767→# 59. NIGHT SHIFT
+  1768→  1768→
+  1769→  1769→Example:
+  1770→  1770→
+  1771→  1771→```text
+  1772→  1772→Shift
+  1773→  1773→10:00 PM → 07:00 AM
+  1774→  1774→```
+  1775→  1775→
+  1776→  1776→Do not incorrectly create two attendance records simply because midnight occurs.
+  1777→  1777→
+  1778→  1778→Attendance should belong to the appropriate shift date.
+  1779→  1779→
+  1780→  1780→---
+  1781→  1781→
+  1782→  1782→# 60. DUPLICATE PUNCH PREVENTION
+  1783→  1783→
+  1784→  1784→Prevent:
+  1785→  1785→
+  1786→  1786→```text
+  1787→  1787→CHECK_IN
+  1788→  1788→CHECK_IN
+  1789→  1789→```
+  1790→  1790→
+  1791→  1791→without valid transition.
+  1792→  1792→
+  1793→  1793→State machine:
+  1794→  1794→
+  1795→  1795→```text
+  1796→  1796→NOT_STARTED
+  1797→  1797→ ↓
+  1798→  1798→WORKING
+  1799→  1799→ ↓
+  1800→  1800→ON_BREAK
+  1801→  1801→ ↓
+  1802→  1802→WORKING
+  1803→  1803→ ↓
+  1804→  1804→CHECKED_OUT
+  1805→  1805→```
+  1806→  1806→
+  1807→  1807→Reject invalid transitions.
+  1808→  1808→
+  1809→  1809→---
+  1810→  1810→
+  1811→  1811→# 61. APPROVAL ENGINE
+  1812→  1812→
+  1813→  1813→Reusable workflow engine.
+  1814→  1814→
+  1815→  1815→Example:
+  1816→  1816→
+  1817→  1817→```text
+  1818→  1818→Employee Request
+  1819→  1819→
+  1820→  1820→↓
+  1821→  1821→Reporting Manager
+  1822→  1822→
+  1823→  1823→↓
+  1824→  1824→Department Manager
+  1825→  1825→
+  1826→  1826→↓
+  1827→  1827→HR
+  1828→  1828→
+  1829→  1829→↓
+  1830→  1830→Completed
+  1831→  1831→```
+  1832→  1832→
+  1833→  1833→Allow workflows based on:
+  1834→  1834→
+  1835→  1835→* company
+  1836→  1836→* branch
+  1837→  1837→* department
+  1838→  1838→* request type
+  1839→  1839→* amount
+  1840→  1840→* employee grade
+  1841→  1841→
+  1842→  1842→---
+  1843→  1843→
+  1844→  1844→# 62. RBAC
+  1845→  1845→
+  1846→  1846→Implement permission-based authorization.
+  1847→  1847→
+  1848→  1848→Examples:
+  1849→  1849→
+  1850→  1850→```text
+  1851→  1851→desk.view
+  1852→  1852→
+  1853→  1853→attendance.view_self
+  1854→  1854→attendance.checkin
+  1855→  1855→attendance.checkout
+  1856→  1856→attendance.regularize
+  1857→  1857→
+  1858→  1858→leave.view_self
+  1859→  1859→leave.apply
+  1860→  1860→
+  1861→  1861→timesheet.create
+  1862→  1862→
+  1863→  1863→expense.create
+  1864→  1864→
+  1865→  1865→team.view
+  1866→  1866→
+  1867→  1867→attendance.view_team
+  1868→  1868→
+  1869→  1869→approval.leave
+  1870→  1870→
+  1871→  1871→payroll.view_self
+  1872→  1872→```
+  1873→  1873→
+  1874→  1874→Never rely on UI hiding alone.
+  1875→  1875→
+  1876→  1876→Backend must enforce authorization.
+  1877→  1877→
+  1878→  1878→---
+  1879→  1879→
+  1880→  1880→# 63. DATA SCOPE
+  1881→  1881→
+  1882→  1882→Support:
+  1883→  1883→
+  1884→  1884→```text
+  1885→  1885→SELF
+  1886→  1886→TEAM
+  1887→  1887→DEPARTMENT
+  1888→  1888→BRANCH
+  1889→  1889→COMPANY
+  1890→  1890→GROUP
+  1891→  1891→GLOBAL
+  1892→  1892→```
+  1893→  1893→
+  1894→  1894→Example:
+  1895→  1895→
+  1896→  1896→Employee:
+  1897→  1897→
+  1898→  1898→```text
+  1899→  1899→attendance.view = SELF
+  1900→  1900→```
+  1901→  1901→
+  1902→  1902→Manager:
+  1903→  1903→
+  1904→  1904→```text
+  1905→  1905→attendance.view = TEAM
+  1906→  1906→```
+  1907→  1907→
+  1908→  1908→HR:
+  1909→  1909→
+  1910→  1910→```text
+  1911→  1911→attendance.view = COMPANY
+  1912→  1912→```
+  1913→  1913→
+  1914→  1914→---
+  1915→  1915→
+  1916→  1916→# 64. AUTHENTICATION
+  1917→  1917→
+  1918→  1918→Support:
+  1919→  1919→
+  1920→  1920→* Email/password
+  1921→  1921→* employee ID login
+  1922→  1922→* SSO
+  1923→  1923→* OAuth/OIDC
+  1924→  1924→* MFA
+  1925→  1925→
+  1926→  1926→Session security:
+  1927→  1927→
+  1928→  1928→* secure cookies
+  1929→  1929→* httpOnly
+  1930→  1930→* sameSite
+  1931→  1931→* session rotation
+  1932→  1932→* short-lived tokens
+  1933→  1933→* refresh token rotation where used
+  1934→  1934→
+  1935→  1935→---
+  1936→  1936→
+  1937→  1937→# 65. SECURITY
+  1938→  1938→
+  1939→  1939→Implement defensive security controls.
+  1940→  1940→
+  1941→  1941→Protect against:
+  1942→  1942→
+  1943→  1943→* SQL injection
+  1944→  1944→* XSS
+  1945→  1945→* CSRF
+  1946→  1946→* IDOR
+  1947→  1947→* broken access control
+  1948→  1948→* privilege escalation
+  1949→  1949→* mass assignment
+  1950→  1950→* request replay
+  1951→  1951→* brute-force
+  1952→  1952→* session fixation
+  1953→  1953→* unauthorized exports
+  1954→  1954→* file-upload abuse
+  1955→  1955→
+  1956→  1956→Validate every request.
+  1957→  1957→
+  1958→  1958→---
+  1959→  1959→
+  1960→  1960→# 66. AUDIT LOGGING
+  1961→  1961→
+  1962→  1962→Log security and business events.
+  1963→  1963→
+  1964→  1964→Example:
+  1965→  1965→
+  1966→  1966→```text
+  1967→  1967→Employee checked in
+  1968→  1968→
+  1969→  1969→Employee requested attendance correction
+  1970→  1970→
+  1971→  1971→Manager approved leave
+  1972→  1972→
+  1973→  1973→Payroll file downloaded
+  1974→  1974→
+  1975→  1975→Employee profile changed
+  1976→  1976→
+  1977→  1977→Permission changed
+  1978→  1978→```
+  1979→  1979→
+  1980→  1980→Capture:
+  1981→  1981→
+  1982→  1982→```text
+  1983→  1983→actor
+  1984→  1984→action
+  1985→  1985→entity
+  1986→  1986→before
+  1987→  1987→after
+  1988→  1988→timestamp
+  1989→  1989→request context
+  1990→  1990→```
+  1991→  1991→
+  1992→  1992→Sensitive information should be redacted.
+  1993→  1993→
+  1994→  1994→---
+  1995→  1995→
+  1996→  1996→# 67. FILE SECURITY
+  1997→  1997→
+  1998→  1998→Allowed files:
+  1999→  1999→
+  2000→  2000→```text
+
+[showing lines 1-2000 of 2002; use offset=2001 with limit to continue reading]

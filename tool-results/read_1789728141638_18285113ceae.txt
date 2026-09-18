@@ -1,0 +1,402 @@
+   121→  const ltEL = await db.leaveType.create({ data: { name: "Earned Leave", code: "EL", annualQuota: 15, carryForward: true, color: "#12B76A" } });
+   122→  const ltCO = await db.leaveType.create({ data: { name: "Compensatory Off", code: "COMP", annualQuota: 6, color: "#F79009" } });
+   123→
+   124→  // ── employees ───────────────────────────────────────────────
+   125→  interface EmpSpec {
+   126→    code: string; first: string; last: string; designation: string; dept: string;
+   127→    branch: { id: string }; role: "EMPLOYEE" | "MANAGER" | "HR" | "ADMIN"; shift: string;
+   128→    dojYears: number; gross: number; dobMonth: number; dobDay: number;
+   129→    probation?: boolean; notice?: boolean; skills: string[];
+   130→  }
+   131→  const year = today.getUTCFullYear();
+   132→  const specs: EmpSpec[] = [
+   133→    { code: "NISS001", first: "Rohit", last: "Patel", designation: "Senior Developer", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 4.2, gross: 85000, dobMonth: 11, dobDay: 14, skills: ["TypeScript", "React", "Node.js", "PostgreSQL", "AWS"] },
+   134→    { code: "NISS002", first: "Anita", last: "Desai", designation: "Engineering Manager", dept: dTech, branch: branchHQ, role: "MANAGER", shift: "GEN", dojYears: 8.1, gross: 142000, dobMonth: 3, dobDay: 22, skills: ["Leadership", "Agile", "Architecture"] },
+   135→    { code: "NISS003", first: "Payal", last: "Mehta", designation: "HR Manager", dept: dHR, branch: branchHQ, role: "HR", shift: "GEN", dojYears: 6.4, gross: 128000, dobMonth: 7, dobDay: 9, skills: ["HR Operations", "Payroll", "Compliance"] },
+   136→    { code: "NISS004", first: "Vikram", last: "Shah", designation: "Head of IT & Systems", dept: dOps, branch: branchHQ, role: "ADMIN", shift: "GEN", dojYears: 9.0, gross: 155000, dobMonth: 1, dobDay: 5, skills: ["IT Infrastructure", "Security", "Vendor Management"] },
+   137→    { code: "NISS005", first: "Priya", last: "Sharma", designation: "QA Engineer", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 2.1, gross: 62000, dobMonth: 9, dobDay: 30, skills: ["Automation", "Selenium", "API Testing"] },
+   138→    { code: "NISS006", first: "Amit", last: "Trivedi", designation: "Backend Developer", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 3.0, gross: 72000, dobMonth: 4, dobDay: 17, skills: ["Node.js", "Python", "Redis", "Docker"] },
+   139→    { code: "NISS007", first: "Neha", last: "Sharma", designation: "Frontend Developer", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 2.6, gross: 68000, dobMonth: 9, dobDay: 18, skills: ["React", "Tailwind", "Framer Motion"] },
+   140→    { code: "NISS008", first: "Rahul", last: "Joshi", designation: "DevOps Engineer", dept: dTech, branch: branchAmd, role: "EMPLOYEE", shift: "GEN", dojYears: 5.2, gross: 94000, dobMonth: 12, dobDay: 2, skills: ["Kubernetes", "CI/CD", "Terraform"] },
+   141→    { code: "NISS009", first: "Sneha", last: "Iyer", designation: "Data Analyst", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 1.8, gross: 58000, dobMonth: 2, dobDay: 11, skills: ["SQL", "PowerBI", "Python"] },
+   142→    { code: "NISS010", first: "Karan", last: "Malhotra", designation: "Business Analyst", dept: dTech, branch: branchBom, role: "EMPLOYEE", shift: "GEN", dojYears: 3.4, gross: 76000, dobMonth: 6, dobDay: 25, skills: ["Jira", "Confluence", "Process Design"] },
+   143→    { code: "NISS011", first: "Divya", last: "Nair", designation: "UI/UX Designer", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 2.9, gross: 70000, dobMonth: 8, dobDay: 8, skills: ["Figma", "Design Systems", "User Research"] },
+   144→    { code: "NISS012", first: "Mohit", last: "Agarwal", designation: "Accounts Executive", dept: dFin, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 1.5, gross: 48000, dobMonth: 10, dobDay: 20, skills: ["Tally", "GST", "Reconciliation"] },
+   145→    { code: "NISS013", first: "Ritu", last: "Bansal", designation: "Finance Manager", dept: dFin, branch: branchHQ, role: "MANAGER", shift: "GEN", dojYears: 7.3, gross: 135000, dobMonth: 5, dobDay: 14, skills: ["FP&A", "Budgeting", "Audit"] },
+   146→    { code: "NISS014", first: "Suresh", last: "Kumar", designation: "Sales Executive", dept: dSales, branch: branchBom, role: "EMPLOYEE", shift: "EVE", dojYears: 2.2, gross: 54000, dobMonth: 3, dobDay: 3, skills: ["CRM", "Negotiation"] },
+   147→    { code: "NISS015", first: "Pooja", last: "Reddy", designation: "Regional Sales Manager", dept: dSales, branch: branchBom, role: "MANAGER", shift: "GEN", dojYears: 6.0, gross: 138000, dobMonth: 11, dobDay: 27, skills: ["Sales Strategy", "Key Accounts"] },
+   148→    { code: "NISS016", first: "Arjun", last: "Verma", designation: "Operations Executive", dept: dOps, branch: branchAmd, role: "EMPLOYEE", shift: "GEN", dojYears: 1.1, gross: 42000, dobMonth: 7, dobDay: 19, skills: ["Logistics", "Vendor Ops"] },
+   149→    { code: "NISS017", first: "Kavya", last: "Gowda", designation: "HR Executive", dept: dHR, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 0.9, gross: 46000, dobMonth: 1, dobDay: 30, skills: ["Onboarding", "Employee Engagement"] },
+   150→    { code: "NISS018", first: "Nikhil", last: "Bhatt", designation: "Full Stack Developer", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 2.4, gross: 74000, dobMonth: 4, dobDay: 6, skills: ["Next.js", "GraphQL", "Prisma"] },
+   151→    { code: "NISS019", first: "Meera", last: "Pillai", designation: "Technical Writer", dept: dTech, branch: branchBom, role: "EMPLOYEE", shift: "GEN", dojYears: 3.7, gross: 56000, dobMonth: 2, dobDay: 28, skills: ["Documentation", "Markdown", "API Docs"] },
+   152→    { code: "NISS020", first: "Sanjay", last: "Rao", designation: "Senior DevOps Engineer", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "NGT", dojYears: 4.5, gross: 102000, dobMonth: 6, dobDay: 12, skills: ["AWS", "Kubernetes", "Observability"] },
+   153→    { code: "NISS021", first: "Aisha", last: "Khan", designation: "Recruitment Specialist", dept: dHR, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 1.6, gross: 52000, dobMonth: 12, dobDay: 15, skills: ["Sourcing", "Interviewing"] },
+   154→    { code: "NISS022", first: "Varun", last: "Sinha", designation: "Junior Developer", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 0.3, gross: 36000, dobMonth: 8, dobDay: 21, probation: true, skills: ["JavaScript", "React"] },
+   155→    { code: "NISS023", first: "Lakshmi", last: "Menon", designation: "Payroll Specialist", dept: dHR, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 5.8, gross: 66000, dobMonth: 10, dobDay: 3, skills: ["Payroll", "Statutory Compliance"] },
+   156→    { code: "NISS024", first: "Deepak", last: "Chauhan", designation: "Network Engineer", dept: dOps, branch: branchAmd, role: "EMPLOYEE", shift: "NGT", dojYears: 3.1, gross: 68000, dobMonth: 5, dobDay: 7, skills: ["Routing", "Firewalls", "VPN"] },
+   157→    { code: "NISS025", first: "Farah", last: "Ali", designation: "Customer Success Associate", dept: dSales, branch: branchBom, role: "EMPLOYEE", shift: "GEN", dojYears: 0.8, gross: 44000, dobMonth: 9, dobDay: 9, probation: true, skills: ["Account Management", "Zendesk"] },
+   158→    { code: "NISS026", first: "Gaurav", last: "Kulkarni", designation: "Test Lead", dept: dTech, branch: branchHQ, role: "EMPLOYEE", shift: "GEN", dojYears: 5.0, gross: 88000, dobMonth: 3, dobDay: 16, skills: ["Test Strategy", "Cypress", "Performance"] },
+   159→  ];
+   160→
+   161→  const shiftMap: Record<string, string> = { GEN: shiftGEN.id, EVE: shiftEVE.id, NGT: shiftNIGHT.id };
+   162→  const employees: Record<string, { id: string; gross: number; first: string; last: string; role: string; dept: string; shiftCode: string }> = {};
+   163→
+   164→  for (const s of specs) {
+   165→    const dob = new Date(Date.UTC(year - 28 - ri(0, 9), s.dobMonth, s.dobDay));
+   166→    const emp = await db.employee.create({
+   167→      data: {
+   168→        empCode: s.code, firstName: s.first, lastName: s.last,
+   169→        email: `${s.first.toLowerCase()}.${s.last.toLowerCase()}@niss.tech`,
+   170→        phone: `+91 9${ri(100000000, 999999999)}`,
+   171→        designation: s.designation, departmentId: s.dept, branchId: s.branch.id, companyId: company.id,
+   172→        role: s.role, status: s.probation ? "PROBATION" : "ACTIVE",
+   173→        dateOfJoining: new Date(today.getTime() - Math.round(s.dojYears * 365.25) * 86400000),
+   174→        dateOfBirth: dob, gender: rand() > 0.5 ? "Male" : "Female",
+   175→        address: `${ri(10, 99)}, ${pick(["Ring Road", "Adajan", "Vesu", "Piplod", "City Light"])}, ${pick(["Surat", "Ahmedabad", "Mumbai"])}, Gujarat`,
+   176→        emergencyName: pick(["Spouse", "Parent", "Sibling"]), emergencyPhone: `+91 9${ri(100000000, 999999999)}`,
+   177→        bankName: pick(["HDFC Bank", "ICICI Bank", "State Bank of India", "Axis Bank"]),
+   178→        bankAccount: `XXXX${ri(1000, 9999)}`, panNumber: `ABCPD${ri(1000, 9999)}E`,
+   179→        taxRegime: pick(["NEW", "OLD"]),
+   180→        skills: JSON.stringify(s.skills),
+   181→        education: JSON.stringify([
+   182→          { degree: "B.E. Computer Engineering", institute: "SVNIT / Gujarat University", year: year - 24 - ri(0, 6) },
+   183→        ]),
+   184→        experience: JSON.stringify([]),
+   185→      },
+   186→    });
+   187→    employees[s.code] = { id: emp.id, gross: s.gross, first: s.first, last: s.last, role: s.role, dept: s.dept, shiftCode: s.shift };
+   188→    await db.user.create({
+   189→      data: { email: emp.email, passwordHash: hashPassword("demo123"), employeeId: emp.id },
+   190→    });
+   191→  }
+   192→
+   193→  // reporting lines
+   194→  const rep: Record<string, string> = {
+   195→    NISS002: "NISS004", NISS003: "NISS004", NISS004: "NISS004",
+   196→    NISS013: "NISS004", NISS015: "NISS004",
+   197→  };
+   198→  for (const s of specs) {
+   199→    if (!rep[s.code]) {
+   200→      if (s.dept === dTech) rep[s.code] = "NISS002";
+   201→      else if (s.dept === dHR) rep[s.code] = "NISS003";
+   202→      else if (s.dept === dFin) rep[s.code] = "NISS013";
+   203→      else if (s.dept === dSales) rep[s.code] = "NISS015";
+   204→      else rep[s.code] = "NISS004";
+   205→    }
+   206→    if (rep[s.code] === s.code) continue;
+   207→    await db.employee.update({ where: { empCode: s.code }, data: { managerId: employees[rep[s.code]].id } });
+   208→  }
+   209→
+   210→  // ── holidays ────────────────────────────────────────────────
+   211→  await db.holiday.create({ data: { companyId: company.id, name: "Independence Day", date: new Date(Date.UTC(year, 7, 15)), type: "PUBLIC" } });
+   212→  await db.holiday.create({ data: { companyId: company.id, name: "Company Foundation Day", date: addDays(today, 6), type: "COMPANY" } });
+   213→  await db.holiday.create({ data: { companyId: company.id, name: "Regional Festival Holiday", date: addDays(today, 12), type: "PUBLIC" } });
+   214→  await db.holiday.create({ data: { companyId: company.id, name: "Diwali Break", date: addDays(today, 40), type: "PUBLIC" } });
+   215→
+   216→  // ── shift roster (last 45 days + next 21 days) ──────────────
+   217→  for (const s of specs) {
+   218→    for (let d = -45; d <= 21; d++) {
+   219→      const day = addDays(today, d);
+   220→      if (dow(day) === 0) continue; // weekly off
+   221→      await db.shiftAssignment.create({
+   222→        data: { employeeId: employees[s.code].id, shiftId: shiftMap[s.shift], date: day },
+   223→      });
+   224→    }
+   225→  }
+   226→
+   227→  // ── attendance history (last 45 days, excluding today) ──────
+   228→  let leaveReqCode = 1000;
+   229→  const leaveReqIds: string[] = [];
+   230→  for (const s of specs) {
+   231→    const empId = employees[s.code].id;
+   232→    for (let d = -45; d <= -1; d++) {
+   233→      const day = addDays(today, d);
+   234→      const dowI = dow(day);
+   235→      const shiftCode = s.shift;
+   236→      const required = shiftCode === "NGT" ? 540 : 510;
+   237→      // weekly off
+   238→      if (dowI === 0) {
+   239→        await db.attendanceDay.create({ data: { employeeId: empId, date: day, shiftId: shiftMap[shiftCode], status: "WO", requiredMinutes: 0 } });
+   240→        continue;
+   241→      }
+   242→      // foundation of event log
+   243→      const ev: { type: string; ts: Date; breakType?: string }[] = [];
+   244→      let state = "NOT_STARTED", status = "A", firstCheckIn: Date | null = null, lastCheckOut: Date | null = null;
+   245→      let gross = 0, brk = 0, lateM = 0, earlyM = 0, otM = 0, requiredMin = required;
+   246→      const roll = rand();
+   247→      const [sh, smm] = shiftCode === "NGT" ? [22, 0] : shiftCode === "EVE" ? [14, 0] : [9, 30];
+   248→
+   249→      if (d === -1 && s.code === "NISS001") {
+   250→        // yesterday: Rohit missing checkout → drives regularization warning
+   251→        firstCheckIn = ist(day, 9, 27);
+   252→        ev.push({ type: "CHECK_IN", ts: firstCheckIn });
+   253→        state = "WORKING"; status = "MP"; // missing punch
+   254→        gross = 540; brk = 38;
+   255→      } else if (roll < 0.04) {
+   256→        status = "A"; // absent
+   257→      } else if (roll < 0.09) {
+   258→        status = "L"; // leave day
+   259→      } else if (roll < 0.13) {
+   260→        status = "WFH"; // WFH
+   261→        firstCheckIn = ist(day, sh, smm + ri(-8, 22));
+   262→        lastCheckOut = ist(day, sh + 8, smm + ri(30, 55));
+   263→        ev.push({ type: "CHECK_IN", ts: firstCheckIn }, { type: "CHECK_OUT", ts: lastCheckOut });
+   264→        state = "CHECKED_OUT"; gross = 500; brk = 40; lateM = 0;
+   265→      } else if (roll < 0.155) {
+   266→        status = "OD"; // on duty
+   267→        firstCheckIn = ist(day, 10, ri(0, 45));
+   268→        lastCheckOut = ist(day, 18, ri(10, 50));
+   269→        ev.push({ type: "CHECK_IN", ts: firstCheckIn }, { type: "CHECK_OUT", ts: lastCheckOut });
+   270→        state = "CHECKED_OUT"; gross = 490; brk = 45;
+   271→      } else if (roll < 0.175) {
+   272→        status = "MP"; // missing punch
+   273→        firstCheckIn = ist(day, sh, smm + ri(-10, 18));
+   274→        ev.push({ type: "CHECK_IN", ts: firstCheckIn });
+   275→        state = "WORKING"; gross = 510; brk = 35;
+   276→      } else {
+   277→        // present
+   278→        const inMin = smm + ri(-14, 38);
+   279→        firstCheckIn = ist(day, sh, inMin);
+   280→        ev.push({ type: "CHECK_IN", ts: firstCheckIn });
+   281→        lateM = inMin > smm + 15 ? inMin - smm : 0;
+   282→        const outMin = smm + required + ri(-15, 55);
+   283→        lastCheckOut = ist(day, sh + Math.floor(outMin / 60), outMin % 60);
+   284→        ev.push({ type: "CHECK_OUT", ts: lastCheckOut });
+   285→        // breaks
+   286→        const teaStart = ist(day, sh + 2, ri(0, 30));
+   287→        ev.push({ type: "BREAK_START", ts: teaStart, breakType: "TEA" });
+   288→        ev.push({ type: "BREAK_END", ts: new Date(teaStart.getTime() + ri(8, 18) * 60000) });
+   289→        const lunchStart = ist(day, 13, ri(0, 30));
+   290→        ev.push({ type: "BREAK_START", ts: lunchStart, breakType: "LUNCH" });
+   291→        ev.push({ type: "BREAK_END", ts: new Date(lunchStart.getTime() + ri(25, 45) * 60000) });
+   292→        brk = ri(30, 70);
+   293→        gross = Math.round((lastCheckOut.getTime() - firstCheckIn.getTime()) / 60000);
+   294→        otM = Math.max(0, gross - brk - required);
+   295→        earlyM = Math.max(0, required - (gross - brk));
+   296→        state = "CHECKED_OUT";
+   297→        status = gross - brk < 240 ? "HD" : "P";
+   298→      }
+   299→      const dayRow = await db.attendanceDay.create({
+   300→        data: {
+   301→          employeeId: empId, date: day, shiftId: shiftMap[shiftCode],
+   302→          state, status, firstCheckIn, lastCheckOut,
+   303→          checkInSource: firstCheckIn ? pick(["WEB", "MOBILE", "BIOMETRIC", "WEB"]) : null,
+   304→          checkOutSource: lastCheckOut ? "WEB" : null,
+   305→          deviceInfo: "Chrome · Windows",
+   306→          grossMinutes: gross, netMinutes: Math.max(0, gross - brk), breakMinutes: brk,
+   307→          requiredMinutes: requiredMin, lateMinutes: lateM, earlyMinutes: earlyM, overtimeMinutes: otM,
+   308→        },
+   309→      });
+   310→      for (const e of ev) {
+   311→        await db.attendanceEvent.create({
+   312→          data: { employeeId: empId, dayId: dayRow.id, type: e.type, breakType: e.breakType ?? null, timestamp: e.ts, source: "WEB", device: "Chrome · Windows" },
+   313→        });
+   314→      }
+   315→      // a few approved leave requests in the past for realism
+   316→      if (status === "L" && rand() < 0.5 && leaveReqIds.length < 60) {
+   317→        const lt = pick([ltCL, ltSL, ltEL]);
+   318→        const lr = await db.leaveRequest.create({
+   319→          data: {
+   320→            code: `LR-${++leaveReqCode}`, employeeId: empId, leaveTypeId: lt.id,
+   321→            fromDate: day, toDate: day, dayMode: "FULL", days: 1,
+   322→            reason: pick(["Family function", "Not feeling well", "Personal work", "Travel out of station"]),
+   323→            status: "APPROVED", currentStage: "DONE",
+   324→            approverId: employees["NISS002"].id, decidedAt: new Date(day.getTime() + 3600000),
+   325→            decisionNote: "Approved",
+   326→          },
+   327→        });
+   328→        leaveReqIds.push(lr.id);
+   329→      }
+   330→    }
+   331→  }
+   332→
+   333→  // ── today's live attendance ─────────────────────────────────
+   334→  async function todayRow(code: string, opts: {
+   335→    state: string; status: string; inH?: number; inM?: number; outH?: number; outM?: number;
+   336→    breaks?: { start: [number, number]; end: [number, number]; type: string }[];
+   337→    source?: string; required?: number;
+   338→  }) {
+   339→    const empId = employees[code].id;
+   340→    const required = opts.required ?? (employees[code].shiftCode === "NGT" ? 540 : 510);
+   341→    const firstCheckIn = opts.inH !== undefined ? ist(today, opts.inH, opts.inM ?? 0) : null;
+   342→    const lastCheckOut = opts.outH !== undefined ? ist(today, opts.outH, opts.outM ?? 0) : null;
+   343→    const gross = firstCheckIn && lastCheckOut ? Math.round((lastCheckOut.getTime() - firstCheckIn.getTime()) / 60000) : firstCheckIn ? Math.round((now.getTime() - firstCheckIn.getTime()) / 60000) : 0;
+   344→    const brk = (opts.breaks ?? []).reduce((acc, b) => acc + Math.round((ist(today, b.end[0], b.end[1]).getTime() - ist(today, b.start[0], b.start[1]).getTime()) / 60000), 0);
+   345→    const row = await db.attendanceDay.create({
+   346→      data: {
+   347→        employeeId: empId, date: today, shiftId: shiftMap[employees[code].shiftCode],
+   348→        state: opts.state, status: opts.status, firstCheckIn, lastCheckOut,
+   349→        checkInSource: firstCheckIn ? (opts.source ?? "WEB") : null,
+   350→        grossMinutes: gross, netMinutes: Math.max(0, gross - brk), breakMinutes: brk,
+   351→        requiredMinutes: required, lateMinutes: 0, earlyMinutes: 0, overtimeMinutes: 0,
+   352→        deviceInfo: "Chrome · Windows",
+   353→      },
+   354→    });
+   355→    if (firstCheckIn) {
+   356→      await db.attendanceEvent.create({ data: { employeeId: empId, dayId: row.id, type: "CHECK_IN", timestamp: firstCheckIn, source: opts.source ?? "WEB", device: "Chrome · Windows" } });
+   357→      for (const b of opts.breaks ?? []) {
+   358→        await db.attendanceEvent.create({ data: { employeeId: empId, dayId: row.id, type: "BREAK_START", breakType: b.type, timestamp: ist(today, b.start[0], b.start[1]), source: "WEB" } });
+   359→        await db.attendanceEvent.create({ data: { employeeId: empId, dayId: row.id, type: "BREAK_END", breakType: b.type, timestamp: ist(today, b.end[0], b.end[1]), source: "WEB" } });
+   360→      }
+   361→      if (lastCheckOut) {
+   362→        await db.attendanceEvent.create({ data: { employeeId: empId, dayId: row.id, type: "CHECK_OUT", timestamp: lastCheckOut, source: "WEB" } });
+   363→      }
+   364→    }
+   365→    return row;
+   366→  }
+   367→
+   368→  // Rohit: WORKING since 09:27, tea + lunch completed (only if those times are in the past)
+   369→  const nowHM = now.getTime() + IST_OFFSET_MS - today.getTime();
+   370→  const minsNow = (nowHM % 86400000) / 60000;
+   371→  const rohitBreaks: { start: [number, number]; end: [number, number]; type: string }[] = [];
+   372→  if (minsNow > 11 * 60 + 50) rohitBreaks.push({ start: [11, 35], end: [11, 50], type: "TEA" });
+   373→  if (minsNow > 13 * 60 + 38) rohitBreaks.push({ start: [13, 5], end: [13, 38], type: "LUNCH" });
+   374→  const rohitIn: [number, number] = minsNow > 9 * 60 + 30 ? [9, 27] : [Math.max(0, Math.floor(minsNow / 60) - 2), Math.floor(minsNow % 60)];
+   375→  const rohitToday = await todayRow("NISS001", { state: "WORKING", status: "P", inH: rohitIn[0], inM: rohitIn[1], breaks: rohitBreaks });
+   376→
+   377→  await todayRow("NISS002", { state: "WORKING", status: "P", inH: 9, inM: 31, breaks: minsNow > 11 * 60 + 45 ? [{ start: [11, 30], end: [11, 44], type: "TEA" }] : [] });
+   378→  await todayRow("NISS003", { state: "WORKING", status: "P", inH: 9, inM: 24, source: "BIOMETRIC" });
+   379→  await todayRow("NISS004", { state: "WORKING", status: "P", inH: 9, inM: 12, source: "MOBILE" });
+   380→  await todayRow("NISS005", { state: "NOT_STARTED", status: "PENDING" });
+   381→  await todayRow("NISS006", { state: "WORKING", status: "P", inH: 9, inM: 18 });
+   382→  await todayRow("NISS007", { state: minsNow > 13 * 60 + 5 ? "ON_BREAK" : "WORKING", status: "P", inH: 9, inM: 33, breaks: minsNow > 11 * 60 + 40 ? [{ start: [11, 40], end: [11, 52], type: "TEA" }] : [] });
+   383→  await todayRow("NISS009", { state: "WORKING", status: "P", inH: 9, inM: 41 });
+   384→  await todayRow("NISS011", { state: "WORKING", status: "WFH", inH: 9, inM: 22, source: "WEB" });
+   385→  await todayRow("NISS018", { state: "WORKING", status: "P", inH: 9, inM: 26 });
+   386→  await todayRow("NISS022", { state: "NOT_STARTED", status: "PENDING" });
+   387→  await todayRow("NISS026", { state: "WORKING", status: "P", inH: 9, inM: 14 });
+   388→  // Rahul on leave; Varun not checked in; night shift starts later
+   389→  await db.attendanceDay.create({ data: { employeeId: employees["NISS008"].id, date: today, shiftId: shiftGEN.id, status: "L", state: "NOT_STARTED", requiredMinutes: 510 } });
+   390→  for (const code of ["NISS010", "NISS012", "NISS014", "NISS016", "NISS017", "NISS019", "NISS021", "NISS023", "NISS025"]) {
+   391→    await db.attendanceDay.create({ data: { employeeId: employees[code].id, date: today, shiftId: shiftMap[employees[code].shiftCode], status: "PENDING", state: "NOT_STARTED", requiredMinutes: 510 } });
+   392→  }
+   393→  for (const code of ["NISS020", "NISS024"]) {
+   394→    await db.attendanceDay.create({ data: { employeeId: employees[code].id, date: today, shiftId: shiftNIGHT.id, status: "PENDING", state: "NOT_STARTED", requiredMinutes: 540 } });
+   395→  }
+   396→
+   397→  // ── leave balances (current year) ───────────────────────────
+   398→  for (const s of specs) {
+   399→    const used = ri(0, 4);
+   400→    const usedSL = ri(0, 2);
+   401→    const usedEL = ri(0, 6);
+   402→    const pend = s.code === "NISS001" ? 1 : 0;
+   403→    await db.leaveBalance.create({ data: { employeeId: employees[s.code].id, leaveTypeId: ltCL.id, year, entitled: 12, used, pending: pend } });
+   404→    await db.leaveBalance.create({ data: { employeeId: employees[s.code].id, leaveTypeId: ltSL.id, year, entitled: 8, used: usedSL, pending: 0 } });
+   405→    await db.leaveBalance.create({ data: { employeeId: employees[s.code].id, leaveTypeId: ltEL.id, year, entitled: 15, used: usedEL, pending: 0 } });
+   406→    await db.leaveBalance.create({ data: { employeeId: employees[s.code].id, leaveTypeId: ltCO.id, year, entitled: 6, used: ri(0, 2), pending: 0 } });
+   407→  }
+   408→
+   409→  // ── leave requests ──────────────────────────────────────────
+   410→  const rohitId = employees["NISS001"].id;
+   411→  const anitaId = employees["NISS002"].id;
+   412→  const payalId = employees["NISS003"].id;
+   413→
+   414→  await db.leaveRequest.create({ data: {
+   415→    code: "LR-1042", employeeId: rohitId, leaveTypeId: ltCL.id,
+   416→    fromDate: addDays(today, -30), toDate: addDays(today, -29), dayMode: "FULL", days: 2,
+   417→    reason: "Family function at hometown", contactDuringLeave: "+91 98765 43210",
+   418→    status: "APPROVED", currentStage: "DONE", approverId: anitaId,
+   419→    decidedAt: addDays(today, -33), decisionNote: "Approved. Handover noted.",
+   420→  } });
+   421→  await db.leaveRequest.create({ data: {
+   422→    code: "LR-1058", employeeId: rohitId, leaveTypeId: ltSL.id,
+   423→    fromDate: addDays(today, -12), toDate: addDays(today, -12), dayMode: "FULL", days: 1,
+   424→    reason: "Fever and cold", status: "APPROVED", currentStage: "DONE",
+   425→    approverId: anitaId, decidedAt: addDays(today, -13), decisionNote: "Get well soon.",
+   426→  } });
+   427→  await db.leaveRequest.create({ data: {
+   428→    code: "LR-1071", employeeId: rohitId, leaveTypeId: ltCL.id,
+   429→    fromDate: addDays(today, -8), toDate: addDays(today, -8), dayMode: "FULL", days: 1,
+   430→    reason: "Personal work", status: "REJECTED", currentStage: "DONE",
+   431→    approverId: anitaId, decidedAt: addDays(today, -9), decisionNote: "Release crunch this sprint, please re-plan.",
+   432→  } });
+   433→  await db.leaveRequest.create({ data: {
+   434→    code: "LR-1082", employeeId: rohitId, leaveTypeId: ltEL.id,
+   435→    fromDate: addDays(today, 21), toDate: addDays(today, 22), dayMode: "FULL", days: 2,
+   436→    reason: "Family trip to Jaipur", contactDuringLeave: "+91 98765 43210",
+   437→    status: "PENDING", currentStage: "MANAGER",
+   438→  } });
+   439→  await db.leaveRequest.create({ data: {
+   440→    code: "LR-1085", employeeId: employees["NISS006"].id, leaveTypeId: ltEL.id,
+   441→    fromDate: addDays(today, 2), toDate: addDays(today, 2), dayMode: "FULL", days: 1,
+   442→    reason: "Bank work", status: "PENDING", currentStage: "MANAGER",
+   443→  } });
+   444→  await db.leaveRequest.create({ data: {
+   445→    code: "LR-1086", employeeId: employees["NISS005"].id, leaveTypeId: ltSL.id,
+   446→    fromDate: addDays(today, 4), toDate: addDays(today, 5), dayMode: "FULL", days: 2,
+   447→    reason: "Medical checkup", status: "PENDING", currentStage: "MANAGER",
+   448→  } });
+   449→  await db.leaveRequest.create({ data: {
+   450→    code: "LR-1087", employeeId: employees["NISS007"].id, leaveTypeId: ltCL.id,
+   451→    fromDate: addDays(today, 9), toDate: addDays(today, 9), dayMode: "FULL", days: 1,
+   452→    reason: "Sister's wedding shopping", status: "PENDING", currentStage: "MANAGER",
+   453→  } });
+   454→  // Rahul's approved leave covering today
+   455→  await db.leaveRequest.create({ data: {
+   456→    code: "LR-1088", employeeId: employees["NISS008"].id, leaveTypeId: ltSL.id,
+   457→    fromDate: today, toDate: today, dayMode: "FULL", days: 1,
+   458→    reason: "Not feeling well", status: "APPROVED", currentStage: "DONE",
+   459→    approverId: anitaId, decidedAt: new Date(now.getTime() - 2 * 3600000), decisionNote: "Take rest.",
+   460→  } });
+   461→
+   462→  // ── duty requests (WFH / on-duty) ───────────────────────────
+   463→  await db.dutyRequest.create({ data: {
+   464→    code: "DR-201", employeeId: rohitId, type: "WFH",
+   465→    fromDate: addDays(today, -14), toDate: addDays(today, -14), hours: 8,
+   466→    reason: "Internet installation at home, ISP appointment", address: "402, Silver Oak Residency, Adajan, Surat",
+   467→    status: "APPROVED", approverId: anitaId, decidedAt: addDays(today, -15), decisionNote: "Approved.",
+   468→  } });
+   469→  await db.dutyRequest.create({ data: {
+   470→    code: "DR-204", employeeId: rohitId, type: "ON_DUTY", subtype: "CLIENT_VISIT",
+   471→    fromDate: addDays(today, -7), toDate: addDays(today, -7), hours: 6,
+   472→    reason: "Deployment support at client production environment",
+   473→    destination: "Acme Corp, Mumbai", clientName: "Acme Corp",
+   474→    status: "APPROVED", approverId: anitaId, decidedAt: addDays(today, -8), decisionNote: "Approved. Share visit report.",
+   475→  } });
+   476→  await db.dutyRequest.create({ data: {
+   477→    code: "DR-207", employeeId: employees["NISS011"].id, type: "WFH",
+   478→    fromDate: today, toDate: today, hours: 8,
+   479→    reason: "Design review marathon — focus work from home",
+   480→    status: "APPROVED", approverId: anitaId, decidedAt: new Date(now.getTime() - 26 * 3600000), decisionNote: "Approved.",
+   481→  } });
+   482→  await db.dutyRequest.create({ data: {
+   483→    code: "DR-209", employeeId: employees["NISS006"].id, type: "WFH",
+   484→    fromDate: addDays(today, 2), toDate: addDays(today, 2), hours: 8,
+   485→    reason: "Apartment maintenance work", status: "PENDING",
+   486→  } });
+   487→  await db.dutyRequest.create({ data: {
+   488→    code: "DR-210", employeeId: employees["NISS009"].id, type: "ON_DUTY", subtype: "TRAINING",
+   489→    fromDate: addDays(today, 3), toDate: addDays(today, 3), hours: 8,
+   490→    reason: "Advanced SQL workshop by DataLabs", destination: "DataLabs Training Center, Ahmedabad",
+   491→    status: "PENDING",
+   492→  } });
+   493→
+   494→  // ── regularizations ─────────────────────────────────────────
+   495→  await db.regularization.create({ data: {
+   496→    code: "AR-301", employeeId: employees["NISS005"].id,
+   497→    date: addDays(today, -2), currentCheckIn: ist(addDays(today, -2), 9, 34), currentCheckOut: null,
+   498→    requestedCheckIn: ist(addDays(today, -2), 9, 34), requestedCheckOut: ist(addDays(today, -2), 18, 42),
+   499→    reason: "Forgot to check out while leaving — server room verification with security", status: "PENDING",
+   500→  } });
+   501→
+   502→  // ── tasks ───────────────────────────────────────────────────
+   503→  const tasks = [
+   504→    { t: "Client report — September billing summary", project: "Acme Corp", pr: "HIGH", st: "IN_PROGRESS", due: ist(today, 16, 0), prog: 45, by: "Anita Desai" },
+   505→    { t: "Verify payroll data before cut-off", project: "Internal", pr: "URGENT", st: "TODO", due: ist(today, 18, 0), prog: 0, by: "Payal Mehta" },
+   506→    { t: "Fix API pagination regression", project: "Project Alpha", pr: "HIGH", st: "REVIEW", due: ist(today, 18, 30), prog: 90, by: "Anita Desai" },
+   507→    { t: "Team update — sprint 14 highlights", project: "Internal", pr: "MEDIUM", st: "COMPLETED", due: ist(today, 11, 0), prog: 100, by: "Anita Desai" },
+   508→    { t: "Refactor auth middleware", project: "Project Alpha", pr: "MEDIUM", st: "BLOCKED", due: addDays(today, 1), prog: 30, by: "Anita Desai" },
+   509→    { t: "Prepare OKR draft for Q4", project: "Internal", pr: "LOW", st: "TODO", due: addDays(today, 3), prog: 0, by: "Anita Desai" },
+   510→    { t: "Update API documentation v2.3", project: "Project Alpha", pr: "MEDIUM", st: "TODO", due: addDays(today, 4), prog: 10, by: "Anita Desai" },
+   511→    { t: "Security patch review — Node 22", project: "Internal", pr: "HIGH", st: "IN_PROGRESS", due: addDays(today, 2), prog: 60, by: "Vikram Shah" },
+   512→  ];
+   513→  for (const tk of tasks) {
+   514→    await db.task.create({
+   515→      data: {
+   516→        employeeId: rohitId, title: tk.t, project: tk.project, priority: tk.pr, status: tk.st,
+   517→        dueAt: tk.due, assignedBy: tk.by, progress: tk.prog,
+   518→        completedAt: tk.st === "COMPLETED" ? new Date() : null,
+   519→        description: `${tk.t} — tracked under ${tk.project}. Update progress as work advances.`,
+   520→      },
+
+[showing lines 121-520 of 732; use offset=521 with limit to continue reading]

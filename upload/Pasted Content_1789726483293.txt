@@ -1,0 +1,4297 @@
+# MASTER PROMPT — CORPORATE EMPLOYEE DESK / MY DESK HRMS WEBSITE
+
+You are a senior enterprise software architect, product designer, UI/UX engineer, full-stack developer, database architect, security engineer, QA engineer, DevOps engineer, and HR technology specialist.
+
+Your task is to design and build a complete, production-ready, enterprise-grade **Corporate Employee Desk / My Desk HRMS web application**.
+
+This must not be a basic attendance dashboard.
+
+It must become the employee’s complete daily workplace operating system where an employee can manage:
+
+* Attendance
+* Check-in / Check-out
+* Live working hours
+* Breaks
+* Shift
+* Overtime
+* Attendance regularization
+* Leave
+* WFH
+* On-duty requests
+* Tasks
+* Calendar
+* Meetings
+* Timesheets
+* Payroll
+* Payslips
+* Expenses
+* Reimbursements
+* Documents
+* HR requests
+* Announcements
+* Notifications
+* Approvals
+* Employee profile
+* Team information
+* Goals
+* Performance
+* Help desk
+* Company directory
+* Holidays
+* Birthday/work anniversary information
+* Personal productivity
+* Employee self-service
+
+The application should feel like a combination of:
+
+* Microsoft 365 employee portal
+* Workday
+* Darwinbox
+* Zoho People
+* SAP SuccessFactors
+* Rippling
+* BambooHR
+* Slack-style workplace productivity
+* Modern enterprise SaaS dashboard
+
+Do not copy any product directly.
+
+Create an original, clean, professional, premium enterprise UI.
+
+---
+
+# 1. PRODUCT NAME
+
+Use:
+
+**My Desk**
+
+Optional branding:
+
+**NISS HRMS — My Desk**
+
+Tagline:
+
+**Your Workday. One Workspace.**
+
+---
+
+# 2. PRIMARY OBJECTIVE
+
+The employee should be able to log in and immediately understand:
+
+* Am I checked in?
+* What is my shift?
+* How many hours have I worked?
+* How much break time have I taken?
+* When should I check out?
+* Am I late?
+* Am I working overtime?
+* What tasks do I have today?
+* What meetings are scheduled?
+* Who is absent from my team?
+* What approvals/actions require me?
+* Do I have pending HR requests?
+* What leave balance is available?
+* When is my next holiday?
+* What is my payroll status?
+* Are there announcements?
+* What should I do next?
+
+The employee must not need to visit multiple pages just to understand the current workday.
+
+---
+
+# 3. TARGET USERS
+
+Support:
+
+* Employee
+* Team Lead
+* Supervisor
+* Manager
+* HR Executive
+* HR Manager
+* Department Head
+* Branch Manager
+* Payroll User
+* Finance User
+* Administrator
+* Super Administrator
+
+However, **My Desk** should primarily remain an employee-centric experience.
+
+Managers should receive additional team widgets depending on permissions.
+
+---
+
+# 4. ENTERPRISE HIERARCHY
+
+Support:
+
+```text
+Group
+ └── Company
+      └── Branch
+           └── Location
+                └── Department
+                     └── Division
+                          └── Team
+                               └── Employee
+```
+
+Every attendance, leave, payroll, shift, task and workflow record must respect organizational scope.
+
+---
+
+# 5. RESPONSIVE TARGETS
+
+Build fully responsive UI for:
+
+* 2560px desktop
+* 1920px desktop
+* 1440px laptop
+* 1366px laptop
+* MacBook
+* 1280px
+* 1024px tablet landscape
+* 768px tablet
+* iPad
+* 430px mobile
+* 390px mobile
+* 375px mobile
+* iPhone
+* Android
+
+Never create horizontal page overflow except where intentionally required for data grids.
+
+---
+
+# 6. GLOBAL APPLICATION LAYOUT
+
+Desktop layout:
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│ Global Top Navigation                                       │
+├───────────────┬──────────────────────────────────────────────┤
+│               │                                              │
+│ Left Sidebar  │ Main Workspace                               │
+│               │                                              │
+│               │                                              │
+└───────────────┴──────────────────────────────────────────────┘
+```
+
+Top bar must contain:
+
+* Organization logo
+* Global search
+* Quick-create button
+* Current date
+* Notification center
+* Help
+* Employee avatar
+* Profile menu
+* Company/branch switcher if authorized
+
+Sidebar:
+
+* My Desk
+* Attendance
+* My Calendar
+* Leave
+* Timesheet
+* Tasks
+* Payroll
+* Expenses
+* Documents
+* Requests
+* Performance
+* Directory
+* Help Desk
+* Settings
+
+Managers additionally receive:
+
+* My Team
+* Team Attendance
+* Team Leave
+* Team Tasks
+* Approvals
+
+---
+
+# 7. MY DESK HOMEPAGE
+
+Route:
+
+```text
+/desk
+```
+
+This is the employee home page after login.
+
+Header:
+
+```text
+Good Morning, Rohit 👋
+
+Friday, 18 September 2026
+
+Here's your workday at a glance.
+```
+
+Show current employee context:
+
+* Profile photo
+* Name
+* Employee ID
+* Designation
+* Department
+* Branch
+* Reporting manager
+
+Do not make this area excessively large.
+
+---
+
+# 8. LIVE ATTENDANCE HERO CARD
+
+The most important component.
+
+Example:
+
+```text
+TODAY'S WORKDAY
+
+General Shift
+09:30 AM → 06:30 PM
+
+WORKING
+
+05 : 42 : 18
+
+Checked In
+09:27 AM
+
+Expected Checkout
+06:30 PM
+
+Shift Progress
+████████████████░░░░ 68%
+
+[Take Break]     [Check Out]
+```
+
+Support real-time states:
+
+* Not Checked In
+* Checked In
+* Working
+* On Break
+* Break Completed
+* Checked Out
+* Late
+* Early Check-in
+* Early Exit
+* Half Day
+* WFH
+* On Duty
+* Leave
+* Holiday
+* Weekly Off
+* Missing Punch
+* Overtime
+* Shift Completed
+
+Timer should update live every second without repeatedly querying the backend.
+
+Backend should provide authoritative timestamps.
+
+---
+
+# 9. ATTENDANCE CALCULATION ENGINE
+
+Track:
+
+```text
+scheduled_duration
+gross_work_duration
+net_work_duration
+break_duration
+paid_break_duration
+unpaid_break_duration
+late_duration
+early_exit_duration
+overtime_duration
+productive_duration
+```
+
+Formula example:
+
+```text
+gross duration =
+last activity - first check-in
+
+net work =
+gross duration - unpaid breaks
+
+remaining =
+required work duration - net work
+```
+
+Never calculate payroll-sensitive totals only in the frontend.
+
+Backend remains authoritative.
+
+---
+
+# 10. CHECK-IN FLOW
+
+Employee selects:
+
+```text
+[Check In]
+```
+
+Capture:
+
+* server timestamp
+* employee
+* company
+* branch
+* location
+* shift
+* device
+* browser
+* platform
+* IP metadata where legally permitted
+* attendance source
+
+Attendance source examples:
+
+* Web
+* Mobile
+* Biometric
+* Admin correction
+* API
+* Kiosk
+
+Optional policy-controlled fields:
+
+* Geolocation
+* selfie
+* office network validation
+* QR check-in
+
+Never silently collect location without appropriate authorization and policy.
+
+---
+
+# 11. CHECK-OUT FLOW
+
+Before checkout show:
+
+```text
+Today
+
+Check-in       09:27 AM
+Worked         08h 13m
+Break          00h 32m
+Required       08h 30m
+Remaining      00h 17m
+```
+
+If employee attempts early checkout:
+
+```text
+Your required working hours are not yet complete.
+
+Remaining: 17 minutes
+
+Reason for early checkout
+[______________________]
+
+[Cancel]
+[Continue Checkout]
+```
+
+Follow organization policy.
+
+---
+
+# 12. BREAK MANAGEMENT
+
+Support:
+
+* Tea Break
+* Lunch Break
+* Personal Break
+* Prayer Break
+* Official Break
+* Custom Break
+
+Example:
+
+```text
+BREAK
+
+Lunch Break
+
+00 : 18 : 42
+
+Started 01:05 PM
+
+[End Break]
+```
+
+Track:
+
+* Start time
+* End time
+* Duration
+* Paid/unpaid
+* Policy limit
+
+Warn employee when break exceeds allowance.
+
+---
+
+# 13. TODAY SUMMARY CARDS
+
+Display compact cards:
+
+```text
+Shift
+08h 30m
+
+Worked
+05h 42m
+
+Break
+00h 32m
+
+Remaining
+02h 48m
+
+Overtime
+00h 00m
+```
+
+Use responsive cards.
+
+Avoid huge dashboard cards.
+
+---
+
+# 14. WORKDAY TIMELINE
+
+Example:
+
+```text
+09:27 AM
+● Checked In
+
+11:35 AM
+● Tea Break
+
+11:50 AM
+● Resumed Work
+
+01:05 PM
+● Lunch Break
+
+01:38 PM
+● Resumed Work
+
+06:30 PM
+○ Expected Checkout
+```
+
+Include source information when useful.
+
+---
+
+# 15. WEEKLY WORKING HOURS
+
+Display:
+
+```text
+Monday      8h 41m
+Tuesday     8h 26m
+Wednesday   9h 04m
+Thursday    8h 37m
+Friday      5h 42m
+```
+
+Visualize:
+
+* required hours
+* actual hours
+* overtime
+* shortage
+
+Show:
+
+```text
+Required      42h 30m
+Completed     39h 12m
+Overtime       1h 34m
+Shortfall      3h 18m
+```
+
+---
+
+# 16. MONTHLY ATTENDANCE SUMMARY
+
+Cards:
+
+* Present
+* Absent
+* Leave
+* Half Day
+* Late
+* WFH
+* On Duty
+* Weekly Off
+* Holiday
+* Missing Punch
+* Overtime
+
+Example:
+
+```text
+Present        18
+Leave           2
+WFH             1
+Late            3
+Holiday         1
+Average Hours   8h 34m
+```
+
+---
+
+# 17. ATTENDANCE CALENDAR
+
+Create monthly visual attendance calendar.
+
+Example states:
+
+```text
+P  Present
+A  Absent
+L  Leave
+H  Holiday
+WO Weekly Off
+WFH
+OD On Duty
+½ Half Day
+MP Missing Punch
+```
+
+Hover/tap day:
+
+```text
+18 September
+
+Shift          General
+Check-in       09:27
+Check-out      18:41
+Worked         8h 42m
+Break          31m
+Overtime       12m
+Status         Present
+```
+
+---
+
+# 18. SHIFT MODULE
+
+Show:
+
+* Shift name
+* Shift code
+* Start time
+* End time
+* Grace period
+* Break allowance
+* Required hours
+* Weekly off
+* Current roster
+
+Support:
+
+* Fixed shift
+* Rotational shift
+* Flexible shift
+* Night shift
+* Split shift
+* Custom shift
+
+Include upcoming shifts.
+
+---
+
+# 19. LEAVE WIDGET
+
+Display available balances:
+
+```text
+Casual Leave       7
+Sick Leave         5
+Earned Leave      12
+Comp Off            2
+```
+
+Quick action:
+
+```text
+[Apply Leave]
+```
+
+Display:
+
+* Pending
+* Approved
+* Rejected
+* Cancelled
+* upcoming leave
+
+---
+
+# 20. APPLY LEAVE PAGE
+
+Route:
+
+```text
+/leave/apply
+```
+
+Form:
+
+* Leave type
+* From date
+* To date
+* Full/Half day
+* Number of days
+* Reason
+* Attachment
+* Contact during leave
+* Substitute employee if applicable
+
+Automatically calculate balance.
+
+Show approval chain.
+
+---
+
+# 21. WFH REQUEST
+
+Quick action:
+
+```text
+Request Work From Home
+```
+
+Fields:
+
+* Date
+* Duration
+* Reason
+* Address/location where required
+* Contact
+* Attachment
+
+Workflow:
+
+```text
+Employee
+↓
+Manager
+↓
+HR if policy requires
+```
+
+---
+
+# 22. ON-DUTY / BUSINESS VISIT
+
+Support:
+
+* Client visit
+* Field visit
+* Training
+* Conference
+* Official travel
+* Remote site work
+
+Capture:
+
+* Date/time
+* purpose
+* destination
+* client
+* notes
+* attachment
+
+---
+
+# 23. ATTENDANCE REGULARIZATION
+
+Allow employees to correct:
+
+* Missing check-in
+* Missing checkout
+* Incorrect timestamp
+* Wrong shift
+* Attendance discrepancy
+
+Form:
+
+```text
+Attendance Date
+Current Check-In
+Requested Check-In
+Current Check-Out
+Requested Check-Out
+Reason
+Attachment
+```
+
+Approval workflow required.
+
+Never directly overwrite original attendance history.
+
+Store:
+
+```text
+original value
+requested value
+approved value
+approved by
+approved at
+reason
+```
+
+---
+
+# 24. CALENDAR
+
+Route:
+
+```text
+/calendar
+```
+
+Calendar combines:
+
+* Employee shifts
+* Company holidays
+* Leave
+* Meetings
+* Tasks
+* Birthdays
+* Work anniversaries
+* Training
+* Payroll date
+* Company events
+* Attendance regularization reminders
+
+Views:
+
+* Day
+* Week
+* Month
+* Agenda
+
+---
+
+# 25. TODAY'S TASKS
+
+Widget:
+
+```text
+MY TASKS
+
+○ Client report
+Due 04:00 PM
+
+○ Verify payroll data
+High Priority
+
+✓ Team update
+Completed
+```
+
+Fields:
+
+* Title
+* Description
+* Due date
+* Priority
+* Project
+* Assigned by
+* Status
+* Progress
+
+Statuses:
+
+* To Do
+* In Progress
+* Blocked
+* Review
+* Completed
+
+---
+
+# 26. PERSONAL TIMESHEET
+
+Route:
+
+```text
+/timesheet
+```
+
+Allow:
+
+* Daily time entry
+* Project
+* Task
+* Start/end
+* Duration
+* Billable/non-billable
+* Description
+
+Weekly view:
+
+```text
+Project Alpha     18h
+Internal           8h
+Support            7h
+Training           4h
+```
+
+Submit timesheet for approval.
+
+---
+
+# 27. MY TEAM
+
+For managers only.
+
+Show:
+
+```text
+My Team
+
+12 Employees
+
+Working        8
+On Break       1
+Leave          1
+WFH            1
+Not Checked In 1
+```
+
+Employee row:
+
+```text
+Avatar
+Name
+Role
+Attendance
+Check-In
+Worked Hours
+Shift
+Status
+```
+
+Do not expose sensitive information without permission.
+
+---
+
+# 28. TEAM ATTENDANCE
+
+Manager view:
+
+```text
+Employee       In       Out      Worked    Status
+
+Amit           09:24    —        5h 48m    Working
+Neha           09:31    —        5h 41m    Working
+Rahul          —        —        —         Leave
+Priya          09:15    —        5h 57m    WFH
+```
+
+Filters:
+
+* company
+* branch
+* department
+* shift
+* status
+* date
+
+---
+
+# 29. APPROVAL INBOX
+
+Create unified approval center.
+
+Categories:
+
+* Leave
+* Attendance
+* WFH
+* On Duty
+* Expenses
+* Timesheets
+* Documents
+* Overtime
+
+Example:
+
+```text
+Approvals
+
+Leave              3
+Attendance          2
+Timesheet           5
+Expense             1
+```
+
+Manager can:
+
+* Approve
+* Reject
+* Request changes
+* Add comment
+
+Record audit history.
+
+---
+
+# 30. EMPLOYEE DIRECTORY
+
+Route:
+
+```text
+/directory
+```
+
+Search by:
+
+* employee
+* department
+* designation
+* company
+* branch
+* skill
+
+Employee card:
+
+```text
+Photo
+
+Rohit Patel
+Senior Developer
+
+Technology
+Surat Office
+
+Email
+Extension
+Teams/Chat
+```
+
+Respect privacy controls.
+
+---
+
+# 31. PROFILE PAGE
+
+Sections:
+
+* Personal
+* Employment
+* Organization
+* Contact
+* Bank
+* Tax
+* Emergency Contact
+* Documents
+* Skills
+* Education
+* Experience
+
+Allow editing only fields allowed by policy.
+
+Sensitive changes may require approval.
+
+---
+
+# 32. PAYROLL
+
+Route:
+
+```text
+/payroll
+```
+
+Show:
+
+* Current salary period
+* Payroll status
+* Net salary
+* Gross salary
+* Deductions
+* Attendance payable days
+* Overtime
+* Reimbursements
+* next payroll date
+
+Do not expose payroll if employee lacks permission.
+
+---
+
+# 33. PAYSLIPS
+
+Example:
+
+```text
+September 2026
+
+Gross Salary
+₹85,000
+
+Deductions
+₹9,420
+
+Net Pay
+₹75,580
+
+[View Payslip]
+[Download PDF]
+```
+
+Payslip history.
+
+---
+
+# 34. TAX CENTER
+
+Support jurisdiction-configurable tax workflows.
+
+For Indian HRMS implementations optionally support:
+
+* TDS
+* Form 16
+* investment declarations
+* tax regime selection
+* tax projections
+
+Keep tax rules configurable because laws change.
+
+---
+
+# 35. EXPENSES AND REIMBURSEMENTS
+
+Route:
+
+```text
+/expenses
+```
+
+Expense categories:
+
+* Travel
+* Food
+* Hotel
+* Fuel
+* Client expense
+* Office supplies
+* Other
+
+Fields:
+
+* date
+* category
+* amount
+* currency
+* merchant
+* project
+* description
+* receipt
+
+Statuses:
+
+* Draft
+* Submitted
+* Manager Approved
+* Finance Approved
+* Paid
+* Rejected
+
+---
+
+# 36. DOCUMENT CENTER
+
+Employee documents:
+
+* Appointment letter
+* Offer letter
+* ID card
+* Salary revision
+* Payslip
+* Tax documents
+* Company policies
+* Certificates
+* Employment letters
+
+Permissions required.
+
+Sensitive files should use secure access controls.
+
+---
+
+# 37. HR SERVICE REQUESTS
+
+Create HR ticket system.
+
+Examples:
+
+* Salary query
+* Attendance issue
+* Leave query
+* Payroll question
+* ID card
+* Experience certificate
+* Employee letter
+* IT support
+* Asset problem
+
+Ticket:
+
+```text
+Ticket #HR-1042
+
+Category
+Attendance
+
+Priority
+Normal
+
+Status
+In Progress
+
+Assigned
+HR Operations
+```
+
+---
+
+# 38. ANNOUNCEMENTS
+
+Desk widget:
+
+```text
+Company Announcements
+
+• Office closed September 24
+• Health insurance enrollment
+• Diwali celebration registration
+```
+
+Support:
+
+* company-level
+* branch-level
+* department-level
+* employee-targeted
+
+---
+
+# 39. NOTIFICATION CENTER
+
+Notifications:
+
+* Leave approved
+* Attendance regularization required
+* Missing checkout
+* Task assigned
+* Payroll processed
+* Payslip generated
+* New announcement
+* Expense approved
+* Shift changed
+* Manager comment
+
+Support:
+
+* unread/read
+* filtering
+* deep links
+
+---
+
+# 40. QUICK ACTION PANEL
+
+Allow configurable shortcuts:
+
+```text
++ Apply Leave
++ Regularize Attendance
++ Request WFH
++ On Duty
++ Add Timesheet
++ Add Expense
++ Raise HR Ticket
+```
+
+---
+
+# 41. UPCOMING WIDGET
+
+Show:
+
+```text
+Upcoming
+
+10:30 AM
+Daily Standup
+
+02:00 PM
+Client Meeting
+
+21 Sep
+Team Review
+
+24 Sep
+Company Holiday
+```
+
+---
+
+# 42. HOLIDAY WIDGET
+
+Show next holiday.
+
+```text
+Next Holiday
+
+24 September
+Company Holiday
+
+6 days remaining
+```
+
+---
+
+# 43. TEAM BIRTHDAYS AND ANNIVERSARIES
+
+Optional configurable widget.
+
+Example:
+
+```text
+Today
+
+🎂 Neha Sharma
+5th Work Anniversary
+```
+
+Privacy settings required.
+
+---
+
+# 44. GOALS AND PERFORMANCE
+
+Widget:
+
+```text
+Quarter Goals
+
+Revenue Dashboard
+75%
+
+Automation Project
+60%
+
+Certification
+100%
+```
+
+Performance module route:
+
+```text
+/performance
+```
+
+---
+
+# 45. UI DESIGN LANGUAGE
+
+Use professional enterprise styling.
+
+Visual characteristics:
+
+* clean
+* minimal
+* calm
+* structured
+* high information density
+* premium SaaS feel
+
+Avoid:
+
+* oversized cards
+* huge text
+* excessive gradients
+* childish illustrations
+* excessive animations
+* excessive rounded corners
+
+---
+
+# 46. COLOR SYSTEM
+
+Use design tokens.
+
+Example light theme:
+
+```text
+Background
+#F7F8FA
+
+Surface
+#FFFFFF
+
+Primary
+#2563EB
+
+Text Primary
+#101828
+
+Text Secondary
+#667085
+
+Border
+#EAECF0
+
+Success
+#12B76A
+
+Warning
+#F79009
+
+Danger
+#F04438
+```
+
+Support dark mode through tokens.
+
+---
+
+# 47. TYPOGRAPHY
+
+Recommended:
+
+* Inter
+* Geist
+* SF Pro equivalent
+* system font fallback
+
+Hierarchy:
+
+```text
+Page title        24px
+Section title     18px
+Card title        14–16px
+Body              14px
+Secondary         12–13px
+```
+
+Maintain readability.
+
+---
+
+# 48. CARD SYSTEM
+
+Cards should use:
+
+```text
+border-radius: 10–12px
+border: 1px solid neutral border
+minimal shadow
+padding: 16–20px
+```
+
+Avoid excessive elevation.
+
+---
+
+# 49. TABLE SYSTEM
+
+Enterprise tables need:
+
+* Search
+* Sort
+* Filters
+* Column visibility
+* Pagination
+* Row density
+* Export
+* Sticky headers
+* Responsive behavior
+* Empty states
+* Loading states
+* Error states
+
+For large datasets, support:
+
+* server pagination
+* virtualization where useful
+
+---
+
+# 50. MOBILE UX
+
+Mobile bottom navigation:
+
+```text
+Desk
+Attendance
+Calendar
+Requests
+More
+```
+
+Mobile attendance card must remain primary.
+
+Example:
+
+```text
+Good Morning Rohit
+
+General Shift
+09:30 → 18:30
+
+WORKING
+
+05:42:18
+
+Check In
+09:27
+
+Worked
+05:42
+
+Break
+00:32
+
+Remaining
+02:48
+
+[Break]
+
+[Check Out]
+```
+
+Stack secondary widgets.
+
+---
+
+# 51. MOBILE QUICK ACTIONS
+
+Display horizontally scrollable or grid:
+
+```text
+Leave
+WFH
+Timesheet
+Expense
+Regularize
+Help Desk
+```
+
+---
+
+# 52. FRONTEND STACK
+
+Preferred:
+
+```text
+React
+TypeScript
+Vite
+
+React Router
+TanStack Query
+
+Zustand
+
+Tailwind CSS
+
+React Hook Form
+Zod
+
+Axios or equivalent typed API layer
+
+Recharts / ECharts
+
+Lucide Icons
+```
+
+Optional:
+
+```text
+Framer Motion
+```
+
+Use animation sparingly.
+
+---
+
+# 53. FRONTEND ARCHITECTURE
+
+Example:
+
+```text
+src/
+ ├── app/
+ ├── layouts/
+ ├── modules/
+ │    ├── desk/
+ │    ├── attendance/
+ │    ├── shifts/
+ │    ├── leave/
+ │    ├── tasks/
+ │    ├── calendar/
+ │    ├── payroll/
+ │    ├── timesheet/
+ │    ├── expenses/
+ │    ├── documents/
+ │    ├── requests/
+ │    └── profile/
+ ├── components/
+ ├── hooks/
+ ├── services/
+ ├── stores/
+ ├── utils/
+ ├── types/
+ └── styles/
+```
+
+Avoid giant files.
+
+---
+
+# 54. BACKEND
+
+Preferred:
+
+```text
+Node.js
+Express.js
+TypeScript
+```
+
+Alternative:
+
+* NestJS if project architecture already uses it.
+
+Use:
+
+```text
+PostgreSQL
+Redis
+```
+
+---
+
+# 55. BACKEND ARCHITECTURE
+
+Example:
+
+```text
+modules/
+ ├── auth
+ ├── employees
+ ├── attendance
+ ├── shifts
+ ├── leave
+ ├── timesheets
+ ├── tasks
+ ├── calendar
+ ├── payroll
+ ├── expenses
+ ├── notifications
+ ├── documents
+ ├── approvals
+ └── desk
+```
+
+Each module:
+
+```text
+controller
+service
+repository
+validators
+types
+routes
+policy
+tests
+```
+
+---
+
+# 56. DATABASE
+
+Core tables:
+
+```text
+users
+employees
+
+groups
+companies
+branches
+locations
+departments
+teams
+
+shifts
+shift_assignments
+
+attendance_sessions
+attendance_events
+attendance_breaks
+attendance_regularizations
+
+leave_types
+leave_balances
+leave_requests
+
+wfh_requests
+on_duty_requests
+
+timesheets
+timesheet_entries
+
+tasks
+task_assignments
+
+calendar_events
+
+payroll_periods
+payroll_records
+payslips
+
+expenses
+expense_items
+
+documents
+
+notifications
+
+announcements
+
+approval_requests
+approval_steps
+
+audit_logs
+```
+
+---
+
+# 57. ATTENDANCE DATA MODEL
+
+Never store only:
+
+```text
+check_in
+check_out
+```
+
+Maintain immutable events.
+
+Example:
+
+```text
+attendance_events
+
+id
+employee_id
+date
+
+event_type
+
+CHECK_IN
+BREAK_START
+BREAK_END
+CHECK_OUT
+
+timestamp
+source
+device_id
+ip_metadata
+metadata
+created_at
+```
+
+Attendance summary is derived and persisted safely.
+
+---
+
+# 58. TIMEZONE DESIGN
+
+Never assume all employees use same timezone.
+
+Store timestamps using UTC.
+
+Store organization/location timezone separately.
+
+Render according to relevant location.
+
+Handle:
+
+* DST
+* overnight shifts
+* shifts crossing midnight
+* timezone travel
+* remote employee timezone policies
+
+---
+
+# 59. NIGHT SHIFT
+
+Example:
+
+```text
+Shift
+10:00 PM → 07:00 AM
+```
+
+Do not incorrectly create two attendance records simply because midnight occurs.
+
+Attendance should belong to the appropriate shift date.
+
+---
+
+# 60. DUPLICATE PUNCH PREVENTION
+
+Prevent:
+
+```text
+CHECK_IN
+CHECK_IN
+```
+
+without valid transition.
+
+State machine:
+
+```text
+NOT_STARTED
+ ↓
+WORKING
+ ↓
+ON_BREAK
+ ↓
+WORKING
+ ↓
+CHECKED_OUT
+```
+
+Reject invalid transitions.
+
+---
+
+# 61. APPROVAL ENGINE
+
+Reusable workflow engine.
+
+Example:
+
+```text
+Employee Request
+
+↓
+Reporting Manager
+
+↓
+Department Manager
+
+↓
+HR
+
+↓
+Completed
+```
+
+Allow workflows based on:
+
+* company
+* branch
+* department
+* request type
+* amount
+* employee grade
+
+---
+
+# 62. RBAC
+
+Implement permission-based authorization.
+
+Examples:
+
+```text
+desk.view
+
+attendance.view_self
+attendance.checkin
+attendance.checkout
+attendance.regularize
+
+leave.view_self
+leave.apply
+
+timesheet.create
+
+expense.create
+
+team.view
+
+attendance.view_team
+
+approval.leave
+
+payroll.view_self
+```
+
+Never rely on UI hiding alone.
+
+Backend must enforce authorization.
+
+---
+
+# 63. DATA SCOPE
+
+Support:
+
+```text
+SELF
+TEAM
+DEPARTMENT
+BRANCH
+COMPANY
+GROUP
+GLOBAL
+```
+
+Example:
+
+Employee:
+
+```text
+attendance.view = SELF
+```
+
+Manager:
+
+```text
+attendance.view = TEAM
+```
+
+HR:
+
+```text
+attendance.view = COMPANY
+```
+
+---
+
+# 64. AUTHENTICATION
+
+Support:
+
+* Email/password
+* employee ID login
+* SSO
+* OAuth/OIDC
+* MFA
+
+Session security:
+
+* secure cookies
+* httpOnly
+* sameSite
+* session rotation
+* short-lived tokens
+* refresh token rotation where used
+
+---
+
+# 65. SECURITY
+
+Implement defensive security controls.
+
+Protect against:
+
+* SQL injection
+* XSS
+* CSRF
+* IDOR
+* broken access control
+* privilege escalation
+* mass assignment
+* request replay
+* brute-force
+* session fixation
+* unauthorized exports
+* file-upload abuse
+
+Validate every request.
+
+---
+
+# 66. AUDIT LOGGING
+
+Log security and business events.
+
+Example:
+
+```text
+Employee checked in
+
+Employee requested attendance correction
+
+Manager approved leave
+
+Payroll file downloaded
+
+Employee profile changed
+
+Permission changed
+```
+
+Capture:
+
+```text
+actor
+action
+entity
+before
+after
+timestamp
+request context
+```
+
+Sensitive information should be redacted.
+
+---
+
+# 67. FILE SECURITY
+
+Allowed files:
+
+```text
+PDF
+JPEG
+PNG
+DOCX where required
+```
+
+Validate:
+
+* MIME
+* extension
+* signature
+* file size
+
+Use malware scanning where available.
+
+Never trust browser MIME headers alone.
+
+---
+
+# 68. API DESIGN
+
+Example:
+
+```text
+GET /api/desk
+
+GET /api/attendance/today
+
+POST /api/attendance/check-in
+
+POST /api/attendance/break/start
+
+POST /api/attendance/break/end
+
+POST /api/attendance/check-out
+
+GET /api/attendance/month
+
+POST /api/attendance/regularization
+
+GET /api/shifts/my
+
+GET /api/leave/balance
+
+POST /api/leave
+
+GET /api/tasks/my
+
+GET /api/calendar
+
+GET /api/payroll/my
+
+GET /api/notifications
+```
+
+Use versioned APIs where appropriate.
+
+---
+
+# 69. MY DESK API
+
+Prefer an aggregated endpoint:
+
+```text
+GET /api/v1/desk
+```
+
+Response includes:
+
+```text
+employee
+
+attendance
+shift
+today_summary
+weekly_hours
+attendance_summary
+
+leave_balance
+tasks
+calendar
+notifications
+
+upcoming_events
+announcements
+
+manager_widgets if permitted
+```
+
+Avoid 20 frontend API calls at page load.
+
+---
+
+# 70. REAL-TIME EVENTS
+
+Use WebSocket/SSE if required for:
+
+* attendance changes
+* notifications
+* approvals
+* manager team presence
+
+Do not unnecessarily broadcast sensitive HR information.
+
+---
+
+# 71. REDIS
+
+Use Redis for:
+
+* caching
+* sessions
+* rate limiting
+* queues
+* realtime presence if needed
+
+Do not use Redis as authoritative payroll/attendance storage.
+
+---
+
+# 72. BACKGROUND JOBS
+
+Queue:
+
+* notifications
+* email
+* attendance processing
+* payroll calculations
+* PDF generation
+* reports
+* reminders
+* overtime calculations
+
+---
+
+# 73. NOTIFICATION CHANNELS
+
+Support configurable:
+
+* In-app
+* Email
+* Push
+* SMS
+* WhatsApp integration when legally/business appropriate
+
+Examples:
+
+```text
+Missing checkout reminder
+
+Shift begins in 30 minutes
+
+Leave approved
+
+Payslip available
+
+Timesheet due
+```
+
+---
+
+# 74. SEARCH
+
+Global search:
+
+```text
+Search employees, pages, documents, actions...
+```
+
+Results categories:
+
+* Employees
+* Pages
+* Requests
+* Tasks
+* Documents
+
+Respect permissions.
+
+---
+
+# 75. COMMAND PALETTE
+
+Optional:
+
+```text
+Ctrl / Cmd + K
+```
+
+Actions:
+
+* Apply leave
+* Open attendance
+* Create expense
+* Search employee
+* Add timesheet
+* Open payslip
+
+---
+
+# 76. ACCESSIBILITY
+
+Target WCAG 2.2 AA.
+
+Include:
+
+* keyboard navigation
+* visible focus
+* semantic HTML
+* aria labels
+* screen reader labels
+* good contrast
+* non-color status indicators
+* reduced-motion support
+
+---
+
+# 77. PERFORMANCE
+
+Targets:
+
+```text
+Fast initial load
+
+minimal JS bundle
+
+lazy loaded modules
+
+optimized images
+
+API caching
+
+query deduplication
+```
+
+Avoid rendering entire enterprise datasets at once.
+
+---
+
+# 78. LOADING STATES
+
+Do not show blank screens.
+
+Use:
+
+* skeletons
+* localized loading
+* optimistic states only when safe
+
+Attendance punch buttons must clearly show transaction progress.
+
+---
+
+# 79. ERROR HANDLING
+
+Create user-friendly errors.
+
+Example:
+
+```text
+Unable to check in.
+
+Your attendance status may have changed.
+
+Refresh Status
+```
+
+Never show raw stack traces.
+
+---
+
+# 80. OFFLINE / NETWORK INTERRUPTION
+
+If employee clicks Check Out and internet fails:
+
+do not visually mark them checked out unless server confirms.
+
+Show:
+
+```text
+Checkout was not confirmed.
+
+Please retry when connection is restored.
+```
+
+This prevents false attendance records.
+
+---
+
+# 81. ATTENDANCE CONCURRENCY
+
+Handle:
+
+* two browser tabs
+* web + mobile
+* repeated double-click
+* slow request retry
+
+Use:
+
+* idempotency keys
+* DB locking/transaction logic
+* unique state constraints
+
+---
+
+# 82. REPORTS
+
+Employee reports:
+
+* Monthly Attendance
+* Leave History
+* Timesheet
+* Expense History
+* Payroll
+* Overtime
+
+Manager:
+
+* Team Attendance
+* Absence
+* Late Coming
+* Work Hours
+* Overtime
+* Leave
+
+Export:
+
+* CSV
+* XLSX
+* PDF
+
+Permission controlled.
+
+---
+
+# 83. DASHBOARD CUSTOMIZATION
+
+Allow optional widget preferences:
+
+```text
+My Desk Layout
+
+✓ Attendance
+✓ Tasks
+✓ Calendar
+✓ Leave
+✓ Announcements
+□ Payroll
+```
+
+Do not allow users to remove mandatory attendance controls.
+
+---
+
+# 84. PERSONAL SETTINGS
+
+Settings:
+
+* Theme
+* Language
+* Date format
+* Time format
+* Notification preferences
+* Desk widgets
+
+Organization policy can override restricted settings.
+
+---
+
+# 85. INTERNATIONALIZATION
+
+Architecture should support:
+
+* English
+* Hindi
+* Gujarati
+* additional languages
+
+Externalize UI strings.
+
+---
+
+# 86. EMPTY STATES
+
+Examples:
+
+```text
+No tasks today.
+
+You're all caught up.
+```
+
+```text
+No upcoming leave.
+
+Plan time off whenever you need it.
+```
+
+Avoid empty blank containers.
+
+---
+
+# 87. DESIGN COMPONENT LIBRARY
+
+Build reusable:
+
+```text
+Button
+
+Input
+Textarea
+Select
+MultiSelect
+Checkbox
+Radio
+Switch
+
+Badge
+
+Avatar
+
+Card
+MetricCard
+
+Modal
+Drawer
+
+Tabs
+
+Tooltip
+
+Popover
+
+Dropdown
+
+DatePicker
+TimePicker
+
+DataTable
+
+StatusBadge
+
+ProgressBar
+
+Timeline
+
+EmptyState
+
+Skeleton
+
+Toast
+
+ConfirmationDialog
+```
+
+---
+
+# 88. STATUS BADGES
+
+Standardize statuses.
+
+Example:
+
+```text
+Working
+On Break
+Checked Out
+Late
+Leave
+WFH
+On Duty
+Holiday
+Weekly Off
+Missing Punch
+```
+
+Never use random colors across pages.
+
+---
+
+# 89. DESIGN TOKEN SYSTEM
+
+Create tokens for:
+
+```text
+spacing
+radius
+typography
+colors
+shadows
+z-index
+motion
+breakpoints
+```
+
+Avoid scattered hard-coded values.
+
+---
+
+# 90. DESKTOP DENSITY
+
+The system is used daily by corporate employees.
+
+Prioritize:
+
+* readability
+* speed
+* scannability
+* compact controls
+
+Avoid mobile-style giant blocks on desktop.
+
+---
+
+# 91. MANAGER DESK VARIANT
+
+If current employee manages people, add:
+
+```text
+Team Today
+
+Working     18
+Leave        2
+WFH          4
+Late         3
+
+Pending Approvals
+
+Leave        4
+Attendance   2
+Timesheets   6
+```
+
+Do not replace personal desk information.
+
+---
+
+# 92. HR DESK VARIANT
+
+Authorized HR employee may see:
+
+```text
+Today's Workforce
+
+Employees       842
+Present         714
+Leave            43
+WFH              32
+Absent           21
+Late             32
+```
+
+Only where authorization permits.
+
+---
+
+# 93. RESPONSIVENESS RULES
+
+At desktop:
+
+```text
+sidebar + content
+```
+
+Tablet:
+
+```text
+collapsible sidebar
+```
+
+Mobile:
+
+```text
+bottom navigation
+```
+
+Cards automatically reduce columns:
+
+```text
+Desktop 4
+Tablet 2
+Mobile 1 or 2 depending metric size
+```
+
+---
+
+# 94. RESPONSIVE TABLES
+
+For mobile:
+
+Do not squeeze 10 columns into 390px.
+
+Convert complex tables into:
+
+* cards
+* horizontal data grids
+* expandable rows
+
+based on use case.
+
+---
+
+# 95. TESTING
+
+Unit tests:
+
+* attendance calculations
+* shifts
+* break duration
+* overtime
+* leave balances
+* permission checks
+
+Integration tests:
+
+* check-in
+* break
+* checkout
+* regularization
+* approval
+
+E2E:
+
+* login
+* check in
+* break
+* checkout
+* leave request
+* manager approval
+* timesheet
+* expense
+
+---
+
+# 96. CRITICAL ATTENDANCE TEST CASES
+
+Test:
+
+* duplicate check-in
+* break without check-in
+* duplicate break start
+* break end without active break
+* checkout during break
+* duplicate checkout
+* overnight shift
+* early check-in
+* late check-in
+* early exit
+* overtime
+* network retry
+* double-click
+* multiple browser tabs
+* mobile + web simultaneous request
+
+---
+
+# 97. SECURITY TESTS
+
+Test:
+
+* Employee A reading Employee B attendance
+* employee accessing manager endpoint
+* tampering employee ID
+* modifying approval target
+* downloading another employee payslip
+* attachment injection
+* API role bypass
+* IDOR
+* privilege escalation
+
+Backend must reject all unauthorized access.
+
+---
+
+# 98. DATABASE INTEGRITY
+
+Use:
+
+* foreign keys
+* indexes
+* unique constraints
+* transactions
+* soft deletion where appropriate
+* immutable audit history
+
+Avoid storing everything in JSON.
+
+Use JSON only for genuinely flexible metadata.
+
+---
+
+# 99. OBSERVABILITY
+
+Implement:
+
+* structured logs
+* request IDs
+* error tracking
+* application metrics
+* database monitoring
+* queue monitoring
+
+Attendance errors must be traceable.
+
+---
+
+# 100. DEPLOYMENT
+
+Production architecture:
+
+```text
+Browser
+   ↓
+CDN / Reverse Proxy
+   ↓
+Frontend
+
+API Gateway / Reverse Proxy
+   ↓
+Backend API
+   ↓
+PostgreSQL
+Redis
+Object Storage
+Job Workers
+```
+
+Use:
+
+* HTTPS
+* environment separation
+* secret management
+* database backups
+* migration process
+
+---
+
+# 101. CI/CD
+
+Pipeline:
+
+```text
+Install
+↓
+Lint
+↓
+Typecheck
+↓
+Unit Tests
+↓
+Integration Tests
+↓
+Security Checks
+↓
+Build
+↓
+Deploy
+↓
+Migration
+↓
+Smoke Test
+```
+
+Production deployment must fail when mandatory quality gates fail.
+
+---
+
+# 102. ENVIRONMENTS
+
+Support:
+
+```text
+Development
+Testing
+Staging
+Production
+```
+
+Never use production HR data for development without approved masking/anonymization.
+
+---
+
+# 103. PRIVACY
+
+HR data is sensitive.
+
+Apply data minimization.
+
+Sensitive information includes:
+
+* salary
+* tax
+* personal information
+* attendance details
+* documents
+* bank information
+
+Display only where needed.
+
+---
+
+# 104. DATA RETENTION
+
+Create configurable retention policies for:
+
+* attendance
+* audit logs
+* uploaded documents
+* notification history
+* session history
+
+Retention may depend on jurisdiction/company policy.
+
+---
+
+# 105. HOME PAGE VISUAL STRUCTURE
+
+Desktop example:
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│ Good Morning, Rohit                     Fri 18 Sep      │
+│ Senior Developer • Technology                           │
+├───────────────────────────────────┬─────────────────────┤
+│                                   │                     │
+│ LIVE WORKDAY                      │ Quick Actions       │
+│ General Shift                     │                     │
+│                                   │ Leave               │
+│ WORKING                           │ WFH                 │
+│ 05:42:18                          │ Regularize          │
+│                                   │ Timesheet           │
+│ In 09:27                          │ Expense             │
+│ Out 18:30                         │                     │
+│                                   │                     │
+│ █████████████░░░ 68%              │                     │
+│                                   │                     │
+│ [Break]             [Checkout]    │                     │
+├────────────┬────────────┬─────────┴─────┬───────────────┤
+│ Shift      │ Worked     │ Break         │ Remaining     │
+│ 8h30       │ 5h42       │ 32m           │ 2h48          │
+├─────────────────────────────┬───────────────────────────┤
+│ Today Timeline              │ Upcoming                  │
+├─────────────────────────────┼───────────────────────────┤
+│ Weekly Hours                │ My Tasks                  │
+├─────────────────────────────┼───────────────────────────┤
+│ Attendance Summary          │ Leave Balance             │
+├─────────────────────────────┴───────────────────────────┤
+│ Announcements                                           │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+# 106. PAGE ROUTES
+
+Create at minimum:
+
+```text
+/login
+
+/desk
+
+/attendance
+/attendance/calendar
+/attendance/regularization
+
+/shifts
+
+/leave
+/leave/apply
+
+/wfh
+/on-duty
+
+/tasks
+
+/timesheet
+
+/calendar
+
+/team
+
+/approvals
+
+/payroll
+/payroll/payslips
+/payroll/tax
+
+/expenses
+
+/documents
+
+/requests
+
+/directory
+
+/performance
+
+/notifications
+
+/profile
+
+/settings
+```
+
+---
+
+# 107. DATABASE MIGRATIONS
+
+Never manually edit production DB.
+
+Use versioned migrations.
+
+Migration must be:
+
+* repeatable
+* reviewed
+* rollback-aware
+* tested against staging
+
+---
+
+# 108. API CONTRACTS
+
+Generate:
+
+```text
+OpenAPI / Swagger
+```
+
+Document:
+
+* request
+* response
+* error codes
+* permissions
+* validation
+
+---
+
+# 109. ERROR RESPONSE STANDARD
+
+Example:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ATTENDANCE_ALREADY_CHECKED_IN",
+    "message": "You are already checked in.",
+    "requestId": "..."
+  }
+}
+```
+
+Do not leak internals.
+
+---
+
+# 110. SUCCESS RESPONSE STANDARD
+
+Example:
+
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
+
+---
+
+# 111. DESIGN DETAIL — CHECK-IN BUTTON
+
+Button should not be permanently green just because it represents check-in.
+
+Use semantic action states.
+
+Before click:
+
+```text
+Check In
+```
+
+During:
+
+```text
+Checking in...
+```
+
+Success:
+
+```text
+Checked in at 09:27 AM
+```
+
+Never allow double click.
+
+---
+
+# 112. DESIGN DETAIL — LIVE TIMER
+
+Use monospaced numeric formatting to prevent jumping width.
+
+Example:
+
+```text
+05:42:18
+```
+
+Do not continuously call API every second.
+
+Calculate:
+
+```text
+current server-aligned time - session timestamps
+```
+
+Sync periodically.
+
+---
+
+# 113. CLOCK DRIFT
+
+Browser clock may be wrong.
+
+Server should return:
+
+```text
+serverTime
+```
+
+Frontend calculates offset.
+
+Attendance events always use server timestamp.
+
+---
+
+# 114. DEVICE SESSION INFO
+
+Record non-sensitive operational metadata:
+
+```text
+Web
+Chrome
+Windows
+
+or
+
+Mobile
+Android
+```
+
+Do not implement invasive device fingerprinting unless explicitly authorized and legally justified.
+
+---
+
+# 115. COMPANY POLICY ENGINE
+
+Attendance rules must be configurable.
+
+Examples:
+
+```text
+Grace period
+15 min
+
+Minimum half day
+4 hours
+
+Full day
+8h 30m
+
+Maximum break
+60 min
+
+Overtime after
+8h 30m
+```
+
+Never hard-code these values globally.
+
+---
+
+# 116. HOLIDAY ENGINE
+
+Holiday calendars may vary by:
+
+* Country
+* State
+* Branch
+* Company
+* Employee group
+
+Support multiple calendars.
+
+---
+
+# 117. WEEKLY OFF ENGINE
+
+Support:
+
+* Saturday/Sunday
+* alternate Saturday
+* rotating weekly off
+* employee roster-based off days
+
+---
+
+# 118. SHIFT ROSTER
+
+Managers can assign upcoming schedules.
+
+Calendar example:
+
+```text
+Mon General
+Tue General
+Wed General
+Thu Evening
+Fri Evening
+Sat Off
+Sun Off
+```
+
+---
+
+# 119. OVERTIME
+
+Track:
+
+```text
+Calculated Overtime
+Approved Overtime
+Payroll Overtime
+```
+
+Do not assume calculated overtime is automatically payable.
+
+Require policy/approval.
+
+---
+
+# 120. COMP-OFF
+
+Approved overtime may optionally create compensatory leave.
+
+Maintain:
+
+* earned
+* used
+* expiry
+* balance
+
+---
+
+# 121. AUDITABILITY
+
+Every HR workflow must answer:
+
+```text
+Who?
+What?
+When?
+Previous value?
+New value?
+Why?
+Approved by?
+```
+
+---
+
+# 122. DESTRUCTIVE ACTIONS
+
+Require confirmation for:
+
+* cancel leave
+* delete draft
+* withdraw request
+* reject approval
+* remove attachment
+
+Never use browser `window.confirm`.
+
+Create proper confirmation dialogs.
+
+---
+
+# 123. SOFT DELETE
+
+Business records should generally not disappear.
+
+Use archival/cancellation status where required.
+
+Examples:
+
+Attendance event:
+immutable.
+
+Leave:
+cancelled instead of deleted after submission.
+
+---
+
+# 124. PAGINATION
+
+Server-side pagination for large:
+
+* employees
+* attendance history
+* requests
+* expenses
+* documents
+* audit logs
+
+---
+
+# 125. FILTER STATE
+
+Preserve filters in URL where useful.
+
+Example:
+
+```text
+/attendance?month=2026-09&status=late
+```
+
+Allows browser back/navigation and shareable states.
+
+---
+
+# 126. DATE HANDLING
+
+Display:
+
+```text
+18 Sep 2026
+```
+
+or organization-configured format.
+
+Never parse ambiguous strings like:
+
+```text
+09/10/26
+```
+
+internally.
+
+---
+
+# 127. EXPORT SECURITY
+
+Before generating export:
+
+Validate scope again.
+
+Never trust frontend employee IDs.
+
+Log exports.
+
+Large export should use background jobs.
+
+---
+
+# 128. PDF GENERATION
+
+For:
+
+* payslip
+* attendance
+* expense
+* HR letters
+
+Generate server-side.
+
+Use consistent company branding.
+
+---
+
+# 129. ACCESS CONTROL EXAMPLE
+
+Request:
+
+```text
+GET /employees/123/payroll
+```
+
+Backend must verify:
+
+```text
+current user == employee 123
+
+OR
+
+user has payroll permission + valid scope
+```
+
+Never rely solely on frontend route guards.
+
+---
+
+# 130. HOME DESK PERFORMANCE
+
+Desk endpoint target:
+
+```text
+P95 < 500 ms
+```
+
+excluding unavoidable third-party latency.
+
+Cache static:
+
+* holidays
+* policy
+* shift masters
+* announcements
+
+Do not cache rapidly changing attendance incorrectly.
+
+---
+
+# 131. QUERY OPTIMIZATION
+
+Avoid:
+
+```text
+N+1 queries
+```
+
+Use indexes for:
+
+```text
+employee_id
+attendance_date
+company_id
+branch_id
+status
+created_at
+```
+
+---
+
+# 132. UI ERROR RECOVERY
+
+Each widget should fail independently where possible.
+
+Example:
+
+```text
+Unable to load tasks.
+
+[Retry]
+```
+
+Attendance must still remain functional if task service fails.
+
+---
+
+# 133. FEATURE FLAGS
+
+Optional modules should use feature flags.
+
+Example:
+
+```text
+performance_enabled
+expense_enabled
+timesheet_enabled
+wfh_enabled
+```
+
+Do not litter frontend with unstructured checks.
+
+---
+
+# 134. BRANDING
+
+Support:
+
+* logo
+* favicon
+* organization name
+* primary color
+* login background
+* document branding
+
+Keep accessibility standards even when tenant branding changes colors.
+
+---
+
+# 135. MULTI-TENANCY
+
+If SaaS:
+
+Every tenant-owned table must have correct tenant isolation.
+
+Do not rely solely on frontend tenant IDs.
+
+Use backend context from authenticated session.
+
+Prevent cross-tenant access.
+
+---
+
+# 136. MANAGER HIERARCHY
+
+Support:
+
+```text
+Employee
+↓
+Reporting Manager
+↓
+Department Head
+↓
+HR
+```
+
+Maintain effective dates when reporting manager changes.
+
+---
+
+# 137. EFFECTIVE-DATED DATA
+
+Use effective dates for:
+
+* salary
+* designation
+* department
+* reporting manager
+* shift
+* employee status
+
+Historical reports must not incorrectly use only today's values.
+
+---
+
+# 138. EMPLOYEE STATUS
+
+Support:
+
+```text
+Active
+Probation
+Notice Period
+Separated
+Suspended
+Inactive
+```
+
+Attendance rules should respect employment status.
+
+---
+
+# 139. ONBOARDING
+
+Optional Desk widget:
+
+```text
+Onboarding Progress
+
+Profile      ✓
+Bank Details ✓
+Documents     80%
+Training      40%
+```
+
+---
+
+# 140. OFFBOARDING
+
+For notice-period employees:
+
+Show appropriate pending clearances where permitted.
+
+Do not expose manager/HR-only internal separation notes.
+
+---
+
+# 141. ASSET WIDGET
+
+Optional:
+
+```text
+Assigned Assets
+
+MacBook Pro
+Asset #LP-1024
+
+Access Card
+#AC-5578
+```
+
+---
+
+# 142. TRAINING WIDGET
+
+Show:
+
+```text
+Mandatory Training
+
+Information Security
+Due Sep 25
+
+[Continue]
+```
+
+---
+
+# 143. HELP DESK
+
+Categories:
+
+* HR
+* IT
+* Facilities
+* Payroll
+* Admin
+
+Allow:
+
+* attachments
+* comments
+* SLA
+* status
+* assignee
+
+---
+
+# 144. ANNOUNCEMENT READ RECEIPT
+
+For critical company policy:
+
+Support acknowledgement:
+
+```text
+I have read and understood.
+
+[Acknowledge]
+```
+
+Record timestamp.
+
+---
+
+# 145. DATA VISUALIZATION
+
+Use simple charts.
+
+Avoid meaningless doughnut charts everywhere.
+
+Preferred:
+
+* horizontal bars
+* progress bars
+* trends
+* calendars
+* timelines
+
+Charts must include textual equivalents.
+
+---
+
+# 146. DASHBOARD INFORMATION PRIORITY
+
+Priority 1:
+
+```text
+Current attendance
+```
+
+Priority 2:
+
+```text
+Today's actions
+```
+
+Priority 3:
+
+```text
+Tasks/calendar
+```
+
+Priority 4:
+
+```text
+Weekly/monthly analytics
+```
+
+Priority 5:
+
+```text
+Announcements/general information
+```
+
+---
+
+# 147. DESK PERSONALIZATION
+
+Employee can optionally rearrange non-critical widgets.
+
+Do not allow critical compliance warnings to be hidden.
+
+---
+
+# 148. WARNING STATES
+
+Examples:
+
+```text
+Missing Checkout Yesterday
+
+Please regularize your attendance.
+
+[Fix Now]
+```
+
+```text
+Timesheet Due Today
+
+6 hours still unallocated.
+
+[Complete Timesheet]
+```
+
+---
+
+# 149. BANNER SYSTEM
+
+Use banners only for important items.
+
+Avoid permanent clutter.
+
+Types:
+
+* Information
+* Warning
+* Critical
+* Success
+
+---
+
+# 150. DEEP LINKING
+
+Notification click should route directly:
+
+```text
+/leave/requests/LR-1029
+```
+
+not generic homepage.
+
+---
+
+# 151. BROWSER SUPPORT
+
+Support modern:
+
+* Chrome
+* Edge
+* Safari
+* Firefox
+
+Test MacBook Safari.
+
+---
+
+# 152. SESSION EXPIRATION
+
+If attendance timer is active and auth expires:
+
+Do not silently lose workday context.
+
+Re-authenticate and reload authoritative attendance session.
+
+---
+
+# 153. UNSAVED FORM WARNING
+
+For:
+
+* leave
+* expense
+* timesheet
+
+Warn before closing when unsaved changes exist.
+
+---
+
+# 154. FORM VALIDATION
+
+Show validation adjacent to fields.
+
+Example:
+
+```text
+Reason is required.
+```
+
+Do not wait until final submit to reveal every basic issue.
+
+---
+
+# 155. FORM AUTOSAVE
+
+For lengthy forms such as expense/timesheet:
+
+save draft safely.
+
+Show:
+
+```text
+Saved 2 minutes ago
+```
+
+---
+
+# 156. SEARCHABLE SELECTS
+
+Use searchable selects for:
+
+* employee
+* project
+* cost center
+* client
+* department
+
+Do not load 50,000 employees into browser dropdowns.
+
+Use server search.
+
+---
+
+# 157. 50,000 EMPLOYEE SCALE
+
+Architecture should handle organizations with at least:
+
+```text
+50,000 employees
+```
+
+Avoid:
+
+* loading full employees list
+* client-side full attendance processing
+* giant API payloads
+
+Use pagination, indexing, async processing and caching.
+
+---
+
+# 158. PAGE-LEVEL PERMISSIONS
+
+Every route must handle:
+
+```text
+Loading
+Authorized
+Unauthorized
+Feature Disabled
+Not Found
+```
+
+---
+
+# 159. TEST IDs
+
+Add stable selectors:
+
+```text
+data-testid
+```
+
+only where useful for automated tests.
+
+Do not couple E2E tests to fragile CSS.
+
+---
+
+# 160. DESIGN QA
+
+Before finalizing each page verify:
+
+* Alignment
+* spacing
+* text hierarchy
+* responsive behavior
+* button consistency
+* status colors
+* card density
+* table readability
+* empty states
+* loading states
+* error states
+* accessibility
+* keyboard navigation
+
+---
+
+# 161. CODE QUALITY
+
+Required:
+
+```text
+ESLint
+
+TypeScript strict mode
+
+formatting
+
+no dead code
+
+no unused imports
+
+no `any` unless justified
+
+no console logs in production paths
+```
+
+---
+
+# 162. NO PLACEHOLDER IMPLEMENTATION
+
+Do not produce fake buttons.
+
+Every visible interactive control must:
+
+* work,
+* be clearly disabled,
+* or be intentionally marked as future functionality.
+
+Never create UI that pretends to save but does nothing.
+
+---
+
+# 163. NO MOCK DATA IN PRODUCTION
+
+Mock data may exist only in:
+
+```text
+development fixtures
+tests
+storybook
+```
+
+Production UI must consume real APIs.
+
+---
+
+# 164. DEVELOPMENT SEED DATA
+
+Create realistic demo data:
+
+```text
+employee
+manager
+shift
+attendance
+leave
+tasks
+calendar
+payroll
+announcements
+```
+
+Do not use hundreds of identical "John Doe" records.
+
+---
+
+# 165. DATABASE SEED USERS
+
+Provide development-only accounts:
+
+```text
+Employee
+Manager
+HR
+Admin
+```
+
+Never ship default production passwords.
+
+---
+
+# 166. FINAL EXPECTED DELIVERABLES
+
+Produce:
+
+1. Full requirements implementation.
+2. Production-ready frontend.
+3. Production-ready backend.
+4. PostgreSQL schema.
+5. Database migrations.
+6. API contracts.
+7. Authentication.
+8. RBAC.
+9. Organization scope.
+10. Attendance engine.
+11. Shift engine.
+12. Leave system.
+13. WFH system.
+14. On-duty system.
+15. Regularization.
+16. Tasks.
+17. Calendar.
+18. Timesheet.
+19. Payroll employee views.
+20. Expenses.
+21. Documents.
+22. Notifications.
+23. Announcements.
+24. Approval workflows.
+25. Employee directory.
+26. Profile.
+27. Manager desk.
+28. Responsive design.
+29. Dark/light theme.
+30. Accessibility.
+31. Tests.
+32. Security controls.
+33. Audit logging.
+34. Logging/monitoring.
+35. CI/CD.
+36. Deployment documentation.
+37. README.
+38. Environment template.
+39. OpenAPI documentation.
+40. Production-readiness report.
+
+---
+
+# 167. IMPLEMENTATION PROCESS
+
+Work phase-by-phase.
+
+## Phase 0 — Audit and Architecture
+
+Before modifying an existing repository:
+
+Inspect only relevant architecture first:
+
+* frontend framework
+* backend
+* database
+* authentication
+* existing employee model
+* attendance
+* shift
+* permissions
+* routing
+* design system
+
+Do not blindly rewrite the project.
+
+---
+
+## Phase 1 — Foundation
+
+Implement:
+
+* application shell
+* responsive navigation
+* design tokens
+* UI component library
+* API architecture
+* authentication integration
+* permissions
+* employee context
+
+---
+
+## Phase 2 — My Desk
+
+Build:
+
+* header
+* live attendance
+* working timer
+* shift
+* daily metrics
+* timeline
+* quick actions
+* weekly hours
+* tasks
+* upcoming calendar
+* leave balance
+* announcements
+
+This page must be fully functional before continuing.
+
+---
+
+## Phase 3 — Attendance
+
+Build:
+
+* check-in
+* break
+* checkout
+* attendance calendar
+* history
+* monthly summary
+* regularization
+
+---
+
+## Phase 4 — Shift
+
+Build:
+
+* employee shift
+* shift calendar
+* roster
+* shift details
+
+---
+
+## Phase 5 — Leave / WFH / OD
+
+Build complete request workflows.
+
+---
+
+## Phase 6 — Tasks / Calendar / Timesheet
+
+Build complete productivity workspace.
+
+---
+
+## Phase 7 — Payroll / Expenses / Documents
+
+Implement secure employee self-service.
+
+---
+
+## Phase 8 — Manager Experience
+
+Build:
+
+* team attendance
+* team availability
+* approvals
+* team schedule
+
+---
+
+## Phase 9 — Notifications / Help Desk
+
+Complete communication workflows.
+
+---
+
+## Phase 10 — Security and Hardening
+
+Audit:
+
+* RBAC
+* IDOR
+* multi-tenant isolation
+* APIs
+* authentication
+* uploads
+* exports
+* attendance manipulation
+
+---
+
+## Phase 11 — Performance
+
+Profile:
+
+* frontend
+* API
+* DB
+* caching
+* slow queries
+* large table performance
+
+---
+
+## Phase 12 — QA
+
+Run:
+
+```text
+lint
+typecheck
+unit tests
+integration tests
+E2E
+security checks
+production build
+```
+
+---
+
+# 168. EXISTING CODEBASE RULE
+
+If this is being implemented in an existing HRMS:
+
+DO NOT:
+
+* change unrelated business logic
+* rewrite working backend modules unnecessarily
+* rename existing routes without justification
+* break current permissions
+* alter DB data casually
+* replace production workflows because a new UI is easier
+
+Instead:
+
+1. inspect the existing implementation,
+2. map dependencies,
+3. reuse existing logic,
+4. add missing functionality,
+5. migrate carefully.
+
+---
+
+# 169. TARGETED CONTEXT RULE
+
+For each implementation phase:
+
+Inspect only directly connected:
+
+* pages
+* routes
+* components
+* APIs
+* services
+* database tables
+* permissions
+* dependencies
+
+Expand scope only when dependency evidence requires it.
+
+Do not repeatedly scan the entire repository.
+
+---
+
+# 170. NO ASSUMPTIONS RULE
+
+When existing business logic exists:
+
+Do not invent replacements.
+
+Determine:
+
+```text
+current rule
+expected rule
+gap
+impact
+solution
+```
+
+Then implement.
+
+---
+
+# 171. UX RULE
+
+Every page must answer:
+
+```text
+Where am I?
+
+What is happening?
+
+What can I do?
+
+What requires attention?
+
+What happened after my action?
+```
+
+---
+
+# 172. ERROR-FIRST THINKING
+
+Before declaring a workflow complete, consider:
+
+* What if API is unavailable?
+* What if user double-clicks?
+* What if approval changes while page is open?
+* What if shift changes mid-day?
+* What if checkout happens after midnight?
+* What if employee loses internet?
+* What if two tabs are open?
+* What if manager is changed?
+* What if employee lacks permission?
+* What if tenant scope is manipulated?
+* What if attendance source conflicts?
+
+Implement safe outcomes.
+
+---
+
+# 173. SECURITY THINKING
+
+Think like both:
+
+```text
+enterprise developer
+
+AND
+
+defensive security engineer
+```
+
+Look for:
+
+* privilege escalation
+* data leakage
+* workflow bypass
+* object-level authorization failure
+* attendance manipulation
+* payroll exposure
+* tenant leakage
+* approval bypass
+* unsafe upload
+* export abuse
+
+All security testing must remain defensive and authorized.
+
+---
+
+# 174. FINAL RELEASE GATE
+
+Do not declare the application production-ready unless:
+
+```text
+✓ build succeeds
+
+✓ lint passes
+
+✓ typecheck passes
+
+✓ tests pass
+
+✓ attendance state machine verified
+
+✓ API authorization verified
+
+✓ employee isolation verified
+
+✓ tenant isolation verified
+
+✓ responsive UI verified
+
+✓ accessibility checked
+
+✓ critical workflows tested
+
+✓ production configuration validated
+
+✓ migrations reviewed
+
+✓ backup/rollback process documented
+
+✓ no placeholder buttons
+
+✓ no mock production data
+
+✓ no critical console errors
+
+✓ no known critical security issue
+```
+
+---
+
+# FINAL COMMAND
+
+Build this as a real enterprise application, not a visual prototype.
+
+Prioritize:
+
+1. Business correctness
+2. Attendance integrity
+3. Security
+4. Employee usability
+5. Clear UI/UX
+6. Responsive behavior
+7. Performance
+8. Maintainability
+9. Auditability
+10. Scalability
+
+The final **My Desk** experience should allow an employee to open one page and immediately understand and manage their entire working day.
+
+Do not stop after creating the dashboard.
+
+Implement the complete connected website, frontend, backend, database, permissions, APIs, workflows, validation, security, responsive design, tests and production-readiness requirements described above.

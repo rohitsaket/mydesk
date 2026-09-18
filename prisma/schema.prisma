@@ -1,0 +1,655 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// AUTH & SESSIONS
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  employeeId   String?  @unique
+  employee     Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  sessions     Session[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// ORGANIZATION HIERARCHY: Company → Branch → Department → Employee
+// ─────────────────────────────────────────────────────────────
+
+model Company {
+  id             String   @id @default(cuid())
+  name           String
+  code           String   @unique
+  timezone       String   @default("Asia/Calcutta")
+  branches       Branch[]
+  departments    Department[]
+  employees      Employee[]
+  holidays       Holiday[]
+  announcements  Announcement[]
+  payrollPeriods PayrollPeriod[]
+}
+
+model Branch {
+  id        String  @id @default(cuid())
+  name      String
+  city      String
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employees Employee[]
+
+  @@index([companyId])
+}
+
+model Department {
+  id        String  @id @default(cuid())
+  name      String
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employees Employee[]
+
+  @@index([companyId])
+}
+
+model Employee {
+  id             String   @id @default(cuid())
+  empCode        String   @unique
+  firstName      String
+  lastName       String
+  email          String   @unique
+  phone          String?
+  designation    String
+  departmentId   String?
+  branchId       String?
+  companyId      String?
+  managerId      String?
+  role           String   @default("EMPLOYEE") // EMPLOYEE | MANAGER | HR | ADMIN
+  employmentType String   @default("FULL_TIME")
+  status         String   @default("ACTIVE")   // ACTIVE | PROBATION | NOTICE | SEPARATED
+  dateOfJoining  DateTime
+  dateOfBirth    DateTime?
+  gender         String?
+  address        String?
+  emergencyName  String?
+  emergencyPhone String?
+  bankName       String?
+  bankAccount    String?
+  panNumber      String?
+  taxRegime      String   @default("NEW")
+  skills         String   @default("[]")
+  education      String   @default("[]")
+  experience     String   @default("[]")
+  theme          String   @default("system")  // light | dark | system
+  timeFormat     String   @default("12h")     // 12h | 24h
+  dateOfBirthPublic Boolean @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  department   Department?     @relation(fields: [departmentId], references: [id])
+  branch       Branch?         @relation(fields: [branchId], references: [id])
+  company      Company?        @relation(fields: [companyId], references: [id])
+  manager      Employee?       @relation("TeamOf", fields: [managerId], references: [id])
+  reports      Employee[]      @relation("TeamOf")
+
+  user                  User?
+  attendanceDays        AttendanceDay[]
+  attendanceEvents      AttendanceEvent[]
+  leaveRequests         LeaveRequest[]
+  leaveSubstitutions    LeaveRequest[]  @relation("LeaveSubstitute")
+  leaveBalances         LeaveBalance[]
+  dutyRequests          DutyRequest[]
+  regularizations       Regularization[]
+  tasks                 Task[]
+  timesheetEntries      TimesheetEntry[]
+  calendarEvents        CalendarEvent[]
+  payslips              Payslip[]
+  expenses              Expense[]
+  documents             Document[]
+  hrTickets             HrTicket[]
+  notifications         Notification[]
+  goals                 Goal[]
+  assets                Asset[]
+  shiftAssignments      ShiftAssignment[]
+  announcementAcks      AnnouncementAck[]
+
+  @@index([departmentId])
+  @@index([branchId])
+  @@index([managerId])
+  @@index([companyId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHIFTS
+// ─────────────────────────────────────────────────────────────
+
+model Shift {
+  id                    String  @id @default(cuid())
+  name                  String
+  code                  String  @unique
+  startTime             String  // "09:30"
+  endTime               String  // "18:30"
+  shiftType             String  @default("FIXED") // FIXED | ROTATIONAL | FLEXIBLE | NIGHT | SPLIT
+  graceMinutes          Int     @default(15)
+  breakAllowanceMinutes Int     @default(60)
+  requiredMinutes       Int     @default(510)
+  weeklyOff             String  @default("0")    // comma list of JS day indexes
+  description           String?
+
+  assignments     ShiftAssignment[]
+  attendanceDays  AttendanceDay[]
+}
+
+model ShiftAssignment {
+  id         String   @id @default(cuid())
+  employeeId String
+  shiftId    String
+  date       DateTime
+  createdAt  DateTime @default(now())
+
+  employee  Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shift     Shift    @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+}
+
+// ─────────────────────────────────────────────────────────────
+// ATTENDANCE (immutable event log + derived day summary)
+// ─────────────────────────────────────────────────────────────
+
+model AttendanceDay {
+  id               String    @id @default(cuid())
+  employeeId       String
+  date             DateTime  // day (UTC midnight of org-local day)
+  shiftId          String?
+  state            String    @default("NOT_STARTED") // NOT_STARTED | WORKING | ON_BREAK | CHECKED_OUT
+  status           String    @default("PENDING")     // PENDING | P | A | L | H | WO | WFH | OD | HD | MP
+  firstCheckIn     DateTime?
+  lastCheckOut     DateTime?
+  checkInSource    String?   // WEB | MOBILE | BIOMETRIC | ADMIN | API | KIOSK
+  checkOutSource   String?
+  deviceInfo       String?
+  grossMinutes     Int       @default(0)
+  netMinutes       Int       @default(0)
+  breakMinutes     Int       @default(0)
+  requiredMinutes  Int       @default(510)
+  lateMinutes      Int       @default(0)
+  earlyMinutes     Int       @default(0)
+  overtimeMinutes  Int       @default(0)
+  remark           String?
+  regularized      Boolean   @default(false)
+
+  employee Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shift    Shift?            @relation(fields: [shiftId], references: [id])
+  events   AttendanceEvent[]
+
+  @@unique([employeeId, date])
+  @@index([date])
+}
+
+model AttendanceEvent {
+  id         String   @id @default(cuid())
+  employeeId String
+  dayId      String
+  type       String   // CHECK_IN | BREAK_START | BREAK_END | CHECK_OUT
+  breakType  String?  // TEA | LUNCH | PERSONAL | PRAYER | OFFICIAL | CUSTOM
+  timestamp  DateTime
+  source     String   @default("WEB")
+  device     String?
+  createdAt  DateTime @default(now())
+
+  employee Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  day      AttendanceDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, timestamp])
+  @@index([dayId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// LEAVE
+// ─────────────────────────────────────────────────────────────
+
+model LeaveType {
+  id            String  @id @default(cuid())
+  name          String
+  code          String  @unique
+  annualQuota   Int     @default(12)
+  paid          Boolean @default(true)
+  carryForward  Boolean @default(false)
+  color         String  @default("#2563EB")
+
+  balances LeaveBalance[]
+  requests LeaveRequest[]
+}
+
+model LeaveBalance {
+  id           String @id @default(cuid())
+  employeeId   String
+  leaveTypeId  String
+  year         Int
+  entitled     Int    @default(0)
+  used         Int    @default(0)
+  pending      Int    @default(0)
+
+  employee  Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType LeaveType  @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, leaveTypeId, year])
+}
+
+model LeaveRequest {
+  id                String   @id @default(cuid())
+  code              String   @unique
+  employeeId        String
+  leaveTypeId       String
+  fromDate          DateTime
+  toDate            DateTime
+  dayMode           String   @default("FULL") // FULL | FIRST_HALF | SECOND_HALF
+  days              Float    @default(1)
+  reason            String
+  contactDuringLeave String?
+  substituteId      String?
+  attachmentName    String?
+  status            String   @default("PENDING") // PENDING | APPROVED | REJECTED | CANCELLED
+  currentStage      String   @default("MANAGER") // MANAGER | HR | DONE
+  approverId        String?
+  appliedAt         DateTime @default(now())
+  decidedAt         DateTime?
+  decisionNote      String?
+
+  employee  Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType LeaveType  @relation(fields: [leaveTypeId], references: [id])
+  substitute Employee? @relation("LeaveSubstitute", fields: [substituteId], references: [id])
+
+  @@index([employeeId, status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// WFH / ON-DUTY (unified duty requests)
+// ─────────────────────────────────────────────────────────────
+
+model DutyRequest {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  employeeId     String
+  type           String   // WFH | ON_DUTY
+  subtype        String?  // CLIENT_VISIT | FIELD_VISIT | TRAINING | CONFERENCE | TRAVEL | REMOTE_SITE
+  fromDate       DateTime
+  toDate         DateTime?
+  hours          Int?
+  reason         String
+  destination    String?
+  clientName     String?
+  contact        String?
+  address        String?
+  attachmentName String?
+  status         String   @default("PENDING") // PENDING | APPROVED | REJECTED | CANCELLED
+  approverId     String?
+  appliedAt      DateTime @default(now())
+  decidedAt      DateTime?
+  decisionNote   String?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, status])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// ATTENDANCE REGULARIZATION
+// ─────────────────────────────────────────────────────────────
+
+model Regularization {
+  id                String    @id @default(cuid())
+  code              String    @unique
+  employeeId        String
+  date              DateTime
+  currentCheckIn    DateTime?
+  requestedCheckIn  DateTime?
+  currentCheckOut   DateTime?
+  requestedCheckOut DateTime?
+  reason            String
+  attachmentName    String?
+  status            String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  approverId        String?
+  appliedAt         DateTime  @default(now())
+  decidedAt         DateTime?
+  decisionNote      String?
+  appliedCheckIn    DateTime?
+  appliedCheckOut   DateTime?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, status])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// TASKS
+// ─────────────────────────────────────────────────────────────
+
+model Task {
+  id          String    @id @default(cuid())
+  employeeId  String
+  title       String
+  description String?
+  project     String?
+  priority    String    @default("MEDIUM") // LOW | MEDIUM | HIGH | URGENT
+  status      String    @default("TODO")   // TODO | IN_PROGRESS | BLOCKED | REVIEW | COMPLETED
+  dueAt       DateTime?
+  assignedBy  String?
+  progress    Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// CALENDAR & HOLIDAYS
+// ─────────────────────────────────────────────────────────────
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  employeeId  String?
+  companyId   String?
+  title       String
+  description String?
+  type        String   @default("MEETING") // MEETING | TRAINING | EVENT | PAYROLL | REVIEW | INTERVIEW
+  startAt     DateTime
+  endAt       DateTime?
+  allDay      Boolean  @default(false)
+  location    String?
+  organizer   String?
+  attendees   String   @default("")
+
+  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([startAt])
+  @@index([employeeId])
+}
+
+model Holiday {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  date      DateTime
+  type      String   @default("PUBLIC") // PUBLIC | OPTIONAL | COMPANY
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([date])
+}
+
+// ─────────────────────────────────────────────────────────────
+// TIMESHEET
+// ─────────────────────────────────────────────────────────────
+
+model TimesheetEntry {
+  id          String   @id @default(cuid())
+  employeeId  String
+  date        DateTime
+  weekStart   DateTime
+  project     String
+  taskName    String?
+  description String?
+  startMinutes Int     @default(570) // minutes from midnight
+  endMinutes  Int      @default(1050)
+  billable    Boolean  @default(true)
+  minutes     Int      @default(0)
+  status      String   @default("DRAFT") // DRAFT | SUBMITTED | APPROVED | REJECTED
+  approverId  String?
+  submittedAt DateTime?
+  decidedAt   DateTime?
+  decisionNote String?
+  createdAt   DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, weekStart])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// PAYROLL
+// ─────────────────────────────────────────────────────────────
+
+model PayrollPeriod {
+  id        String   @id @default(cuid())
+  companyId String
+  month     Int
+  year      Int
+  status    String   @default("DRAFT") // DRAFT | PROCESSING | PROCESSED | PAID
+  payDate   DateTime
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  payslips  Payslip[]
+
+  @@unique([companyId, month, year])
+}
+
+model Payslip {
+  id              String   @id @default(cuid())
+  employeeId      String
+  periodId        String
+  gross           Int      @default(0)
+  basic           Int      @default(0)
+  hra             Int      @default(0)
+  specialAllowance Int     @default(0)
+  bonus           Int      @default(0)
+  overtimeHours   Float    @default(0)
+  overtimeAmount  Int      @default(0)
+  reimbursement   Int      @default(0)
+  ptax            Int      @default(0)
+  epf             Int      @default(0)
+  tds             Int      @default(0)
+  deductions      Int      @default(0)
+  net             Int      @default(0)
+  payableDays     Float    @default(0)
+  lopDays         Float    @default(0)
+  earningsJson    String   @default("[]")
+  deductionsJson  String   @default("[]")
+  status          String   @default("PROCESSING") // PROCESSING | PAID
+  generatedAt     DateTime @default(now())
+
+  employee Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  period   PayrollPeriod @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, periodId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// EXPENSES
+// ─────────────────────────────────────────────────────────────
+
+model Expense {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  employeeId    String
+  category      String    // TRAVEL | FOOD | HOTEL | FUEL | CLIENT | SUPPLIES | OTHER
+  expenseDate   DateTime
+  amount        Float     @default(0)
+  currency      String    @default("INR")
+  merchant      String?
+  project       String?
+  description   String?
+  receiptName   String?
+  status        String    @default("DRAFT") // DRAFT | SUBMITTED | MANAGER_APPROVED | FINANCE_APPROVED | PAID | REJECTED
+  approverId    String?
+  submittedAt   DateTime?
+  decidedAt     DateTime?
+  decisionNote  String?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, status])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// DOCUMENTS
+// ─────────────────────────────────────────────────────────────
+
+model Document {
+  id              String   @id @default(cuid())
+  employeeId      String?
+  name            String
+  category        String   @default("POLICY") // APPOINTMENT | OFFER | ID | SALARY_REVISION | PAYSLIP | TAX | POLICY | CERTIFICATE | LETTER
+  fileExt         String   @default("pdf")
+  sizeKb          Int      @default(0)
+  confidentiality String   @default("NORMAL") // NORMAL | SENSITIVE
+  sharedWithTeam  Boolean  @default(false)
+  uploadedAt      DateTime @default(now())
+
+  employee Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// HR SERVICE DESK (TICKETS)
+// ─────────────────────────────────────────────────────────────
+
+model HrTicket {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  employeeId  String
+  category    String   @default("HR") // HR | IT | FACILITIES | PAYROLL | ADMIN
+  subject     String
+  description String
+  priority    String   @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+  status      String   @default("OPEN")   // OPEN | IN_PROGRESS | RESOLVED | CLOSED
+  assignee    String?
+  commentsJson String  @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// NOTIFICATIONS & ANNOUNCEMENTS
+// ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id         String   @id @default(cuid())
+  employeeId String
+  title      String
+  body       String?
+  type       String   @default("SYSTEM") // LEAVE | ATTENDANCE | PAYROLL | TASK | ANNOUNCEMENT | EXPENSE | SHIFT | APPROVAL | SYSTEM
+  read       Boolean  @default(false)
+  link       String?
+  createdAt  DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, read])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  companyId   String
+  title       String
+  body        String
+  level       String   @default("COMPANY") // COMPANY | BRANCH | DEPARTMENT | EMPLOYEE
+  category    String   @default("GENERAL") // GENERAL | POLICY | EVENT | HOLIDAY | BENEFITS
+  priority    String   @default("NORMAL") // NORMAL | IMPORTANT | CRITICAL
+  requiresAck Boolean  @default(false)
+  publishedAt DateTime @default(now())
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  acks        AnnouncementAck[]
+
+  @@index([companyId, publishedAt])
+}
+
+model AnnouncementAck {
+  id             String   @id @default(cuid())
+  announcementId String
+  employeeId     String
+  ackedAt        DateTime @default(now())
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  employee       Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, employeeId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// PERFORMANCE & GOALS
+// ─────────────────────────────────────────────────────────────
+
+model Goal {
+  id          String    @id @default(cuid())
+  employeeId  String
+  title       String
+  description String?
+  category    String    @default("DELIVERABLE") // DELIVERABLE | LEARNING | PROCESS | REVENUE
+  metric      String?
+  target      Float     @default(100)
+  current     Float     @default(0)
+  unit        String    @default("%")
+  dueDate     DateTime?
+  status      String    @default("ACTIVE") // ACTIVE | COMPLETED | AT_RISK
+  quarter     String    @default("Q3")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// ASSETS
+// ─────────────────────────────────────────────────────────────
+
+model Asset {
+  id         String   @id @default(cuid())
+  employeeId String
+  name       String
+  code       String   @unique
+  category   String   @default("IT")
+  assignedAt DateTime @default(now())
+  status     String   @default("ASSIGNED") // ASSIGNED | RETURNED
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────────────────────
+// AUDIT LOG
+// ─────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorName String
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
