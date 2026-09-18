@@ -65,7 +65,7 @@ const axisProps = {
 };
 
 // ── main view ───────────────────────────────────────────────
-export function InsightsView() {
+export default function InsightsView() {
   const query = useQuery({
     queryKey: ["insights"],
     queryFn: () => apiGet<InsightsPayload>("/api/insights"),

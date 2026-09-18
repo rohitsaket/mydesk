@@ -242,3 +242,26 @@ Unresolved / Notes for next phase:
 - Consider adding insights deep-link from desk (e.g. "View insights" button on a desk stat card).
 - Punctuality insight for demo user shows 57% — consider seeding slightly better data or an explanatory hint (median arrival 9:40 AM vs 9:30 shift).
 - Widget prefs (notifPrefs) still raw-SQL column; prisma migration pending (low priority).
+
+---
+Task ID: 14 (webDevReview round 2)
+Agent: main (Z.ai Code)
+Task: Scheduled review — QA + NEW Announcements module (view + API fix), Timesheet CSV export, Desk→Insights quick action; corrected prior dynamic-import diagnosis.
+
+Work Log:
+- QA: app stable, all views render, console clean. Found gap: announcements existed only as desk widget — no dedicated view.
+- API FIX /api/announcements: `acknowledged` was hardcoded 0 (dead un-awaited count query) — now awaits Promise.all of per-announcement ack counts; Foundation Day correctly returns 1.
+- NEW Announcements view (announcements-view.tsx, 22nd view): filter chips (All + Needs-your-ack amber + per-category with counts), feed cards with priority left-accent borders (CRITICAL red / IMPORTANT amber), category icon medallions, level labels (All Company/Branch/…), relative timestamps, clamp-3 + Read more/Show less for long bodies, Acknowledge mutation (pending spinner → toast → state flip → invalidates ["announcements"]+["desk"]), acknowledged counts footer, "For your information" for non-ack items, staggered animate-in, scroll-thin max-height list. Wired into ViewKey/MAIN_NAV (after Help Desk, Megaphone icon)/VIEW_TITLES/app-shell (auto: sidebar, mobile More, ⌘K).
+- Desk wiring: widget "View all announcements" now navigates to announcements view (was workaround → notifications); QuickActions gains "Insights" as 8th tile (fills grid; form now optional in action type).
+- NEW Timesheet CSV export: Export CSV button (visible when week has entries) — client-side Blob with BOM, quoted CSV of Date/Day/Project/Task/Description/Start/End/Hours/Billable/Status + TOTAL row, download as timesheet-{weekStart}.csv, success toast.
+- CORRECTED prior round's diagnosis (important for conventions): the "recharts/framer-motion break next/dynamic" conclusion was WRONG — real rule: next/dynamic module loaders REQUIRE A DEFAULT EXPORT (ComponentModule = { default: ComponentType }). All 20 existing views use `export default function XxxView()`; my named exports caused the failures. Insights + Announcements now use default exports; app-shell back to plain dynamic() (dropped .then(m=>m.X)). framer-motion's earlier "poisoning" was the same named-export issue — animate with tw-animate-css remains fine either way.
+- QA (browser as rohit.patel): Announcements renders 4 cards + 6 chips; filter Policy → 1 card, All → 4; Acknowledge click → toast + "Acknowledged" state (test ack surgically reverted via Prisma — desk policy banner intact); API ack counts verified (1 for Foundation Day); Timesheet Export CSV captured via blob monkey-patch — timesheet-2026-09-14.csv with 10 columns + 9 entries + TOTAL; desk QuickActions "Insights" tile → Insights view; desk "View all announcements" → Announcements view; mobile 390px zero overflow; VLM visual review: "clean, no visual defects, correct accent borders"; console + page errors clean; tsc 0 app errors; lint passes.
+
+Stage Summary:
+- 22 views / 42 API route groups. Announcements module complete (view + fixed counts API). Timesheet gains CSV export. Desk links to Insights.
+- CONVENTION (critical): every view file MUST `export default function XxxView()` for next/dynamic — no named-only exports.
+
+Unresolved / Notes for next phase:
+- Read-more threshold (180 chars) — seed bodies are short; consider seeding one longer announcement to showcase expansion.
+- Announcements feed could add HR/Admin "compose" capability (currently read-only for employees — by design for demo).
+- widgetPrefs raw-SQL column migration still pending (low priority).

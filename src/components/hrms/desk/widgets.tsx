@@ -15,14 +15,14 @@ import {
   AlarmClock, CalendarDays, CheckCircle2, ChevronRight, Circle, Clock,
   Coffee, Gauge, Gift, Laptop, Megaphone, Plane, PlaneTakeoff, Receipt,
   Timer, TrendingUp, UserCheck, AlertTriangle, BriefcaseBusiness, FileClock,
-  LifeBuoy, BadgeCheck, PartyPopper, CalendarClock, ClipboardCheck,
+  LifeBuoy, BadgeCheck, PartyPopper, CalendarClock, ClipboardCheck, BarChart3,
 } from "lucide-react";
 import type { ViewKey } from "@/lib/hrms/types";
 
 // ── Quick action panel ───────────────────────────────────────
 export function QuickActions() {
   const navigate = useHrmsStore((s) => s.navigate);
-  const actions: { label: string; view: ViewKey; form: string; icon: typeof Plane }[] = [
+  const actions: { label: string; view: ViewKey; form?: string; icon: typeof Plane }[] = [
     { label: "Apply Leave", view: "leave", form: "apply", icon: Plane },
     { label: "Regularize", view: "attendance", form: "regularize", icon: CalendarClock },
     { label: "Request WFH", view: "wfh", form: "apply", icon: BriefcaseBusiness },
@@ -30,6 +30,7 @@ export function QuickActions() {
     { label: "Timesheet", view: "timesheet", form: "add", icon: FileClock },
     { label: "Expense", view: "expenses", form: "add", icon: Receipt },
     { label: "HR Ticket", view: "helpdesk", form: "raise", icon: LifeBuoy },
+    { label: "Insights", view: "insights", icon: BarChart3 },
   ];
   return (
     <SectionCard title="Quick Actions">
@@ -468,7 +469,7 @@ export function AnnouncementsWidget({ data }: { data: DeskPayload }) {
           ))}
         </ul>
       )}
-      <button className="mt-1 w-full pt-1 text-center text-xs font-medium text-primary hover:underline" onClick={() => navigate("notifications")}>
+      <button className="mt-1 w-full pt-1 text-center text-xs font-medium text-primary hover:underline" onClick={() => navigate("announcements")}>
         View all announcements
       </button>
     </SectionCard>

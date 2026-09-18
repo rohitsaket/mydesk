@@ -3,7 +3,7 @@
 export type ViewKey =
   | "desk" | "insights" | "attendance" | "shifts" | "leave" | "wfh" | "onduty"
   | "tasks" | "timesheet" | "calendar" | "payroll" | "expenses"
-  | "documents" | "helpdesk" | "requests" | "approvals" | "team"
+  | "documents" | "helpdesk" | "announcements" | "requests" | "approvals" | "team"
   | "directory" | "performance" | "notifications" | "profile" | "settings";
 
 export interface EmployeeContext {

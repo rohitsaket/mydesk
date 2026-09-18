@@ -10,7 +10,7 @@ import { DataSkeleton } from "@/components/hrms/shared";
 
 const loading = () => <DataSkeleton />;
 
-const InsightsView = dynamic(() => import("../views/insights-view").then((m) => m.InsightsView), { loading });
+const InsightsView = dynamic(() => import("../views/insights-view"), { loading });
 const AttendanceView = dynamic(() => import("../views/attendance-view"), { loading });
 const ShiftsView = dynamic(() => import("../views/shifts-view"), { loading });
 const LeaveView = dynamic(() => import("../views/leave-view"), { loading });
@@ -24,6 +24,7 @@ const PayrollView = dynamic(() => import("../views/payroll-view"), { loading });
 const ExpensesView = dynamic(() => import("../views/expenses-view"), { loading });
 const DocumentsView = dynamic(() => import("../views/documents-view"), { loading });
 const HelpdeskView = dynamic(() => import("../views/helpdesk-view"), { loading });
+const AnnouncementsView = dynamic(() => import("../views/announcements-view"), { loading });
 const DirectoryView = dynamic(() => import("../views/directory-view"), { loading });
 const PerformanceView = dynamic(() => import("../views/performance-view"), { loading });
 const ProfileView = dynamic(() => import("../views/profile-view"), { loading });
@@ -56,6 +57,7 @@ export function AppShell() {
             {view === "expenses" ? <ExpensesView /> : null}
             {view === "documents" ? <DocumentsView /> : null}
             {view === "helpdesk" ? <HelpdeskView /> : null}
+            {view === "announcements" ? <AnnouncementsView /> : null}
             {view === "directory" ? <DirectoryView /> : null}
             {view === "performance" ? <PerformanceView /> : null}
             {view === "profile" ? <ProfileView /> : null}

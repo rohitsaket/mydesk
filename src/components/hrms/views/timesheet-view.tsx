@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   FileClock, ChevronLeft, ChevronRight, Plus, Loader2, Trash2, Pencil, SendHorizonal,
-  Clock, CircleCheck, CircleAlert, IndianRupee, CalendarDays,
+  Clock, CircleCheck, CircleAlert, IndianRupee, CalendarDays, Download,
 } from "lucide-react";
 
 // ── types ───────────────────────────────────────────────────
@@ -154,6 +154,47 @@ export default function TimesheetView() {
 
   const draftCount = query.data?.counts.draft ?? 0;
 
+  // ── CSV export (client-side from loaded week data) ──────────
+  function exportCsv() {
+    const data = query.data;
+    if (!data) return;
+    const rows: string[][] = [["Date", "Day", "Project", "Task", "Description", "Start", "End", "Hours", "Billable", "Status"]];
+    const hhmm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+    for (const day of data.days) {
+      for (const e of day.entries) {
+        rows.push([
+          day.date,
+          WEEKDAY_SHORT[(parseIsoDay(day.date).getUTCDay() + 6) % 7] ?? "",
+          e.project,
+          e.taskName ?? "",
+          e.description ?? "",
+          hhmm(e.startMinutes),
+          hhmm(e.endMinutes),
+          (e.minutes / 60).toFixed(2),
+          e.billable ? "Yes" : "No",
+          e.status,
+        ]);
+      }
+    }
+    rows.push([]);
+    rows.push(["", "", "", "", "TOTAL", "", "", (data.totals.minutes / 60).toFixed(2), `${data.totals.billableMinutes} billable min`, data.weekStatus]);
+    const csv = rows
+      .map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))
+      .join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `timesheet-${data.weekStart}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("CSV exported", { description: `timesheet-${data.weekStart}.csv downloaded with ${data.days.reduce((n, d) => n + d.entries.length, 0)} entries.` });
+  }
+
+  const totalEntries = query.data?.days.reduce((n, d) => n + d.entries.length, 0) ?? 0;
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -176,6 +217,11 @@ export default function TimesheetView() {
                 <CalendarDays className="h-3 w-3" /> This week
               </Button>
             </div>
+            {totalEntries > 0 ? (
+              <Button variant="outline" size="sm" className="h-8 gap-1" onClick={exportCsv}>
+                <Download className="h-3.5 w-3.5" /> Export CSV
+              </Button>
+            ) : null}
             {draftCount > 0 ? (
               <Button size="sm" className="h-8 gap-1" onClick={() => setSubmitConfirm(true)}>
                 <SendHorizonal className="h-3.5 w-3.5" /> Submit Week

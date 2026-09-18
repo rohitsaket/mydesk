@@ -2,7 +2,7 @@ import type { ViewKey } from "@/lib/hrms/types";
 import {
   LayoutDashboard, CalendarClock, CalendarDays, Plane, FileClock, ListChecks,
   Wallet, Receipt, FolderOpen, LifeBuoy, Target, Users, Settings, ClipboardCheck,
-  UserCheck, BriefcaseBusiness, Bell, UserRound, BarChart3,
+  UserCheck, BriefcaseBusiness, Bell, UserRound, BarChart3, Megaphone,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -25,6 +25,7 @@ export const MAIN_NAV: NavItem[] = [
   { key: "expenses", label: "Expenses", icon: Receipt },
   { key: "documents", label: "Documents", icon: FolderOpen },
   { key: "helpdesk", label: "Help Desk", icon: LifeBuoy },
+  { key: "announcements", label: "Announcements", icon: Megaphone },
   { key: "performance", label: "Performance", icon: Target },
   { key: "directory", label: "Directory", icon: Users },
   { key: "settings", label: "Settings", icon: Settings },
@@ -46,7 +47,7 @@ export const VIEW_TITLES: Record<ViewKey, string> = {
   desk: "My Desk", insights: "Insights", attendance: "Attendance", shifts: "Shifts", leave: "Leave",
   wfh: "Work From Home", onduty: "On Duty", tasks: "Tasks", timesheet: "Timesheet",
   calendar: "My Calendar", payroll: "Payroll", expenses: "Expenses", documents: "Documents",
-  helpdesk: "Help Desk", requests: "Requests", approvals: "Approvals", team: "My Team",
+  helpdesk: "Help Desk", announcements: "Announcements", requests: "Requests", approvals: "Approvals", team: "My Team",
   directory: "Directory", performance: "Performance", notifications: "Notifications",
   profile: "Profile", settings: "Settings",
 };
