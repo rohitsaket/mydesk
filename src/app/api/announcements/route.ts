@@ -12,7 +12,12 @@ const composeSchema = z.object({
   category: z.enum(["GENERAL", "POLICY", "EVENT", "HOLIDAY", "BENEFITS"]).default("GENERAL"),
   priority: z.enum(["NORMAL", "IMPORTANT", "CRITICAL"]).default("NORMAL"),
   requiresAck: z.boolean().default(false),
+  pinned: z.boolean().default(false),
 });
+
+// Priority rank for correct feed ordering (CRITICAL > IMPORTANT > NORMAL).
+// Prisma can't rank by semantic order, so we sort in memory after the fetch.
+const PRIORITY_RANK: Record<string, number> = { CRITICAL: 3, IMPORTANT: 2, NORMAL: 1 };
 
 export async function GET() {
   try {
@@ -23,9 +28,15 @@ export async function GET() {
 
     const announcements = await db.announcement.findMany({
       where: { companyId },
-      orderBy: [{ priority: "desc" }, { publishedAt: "desc" }],
+      orderBy: [{ pinned: "desc" }, { publishedAt: "desc" }],
       take: 50,
     });
+    announcements.sort(
+      (a, b) =>
+        (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) ||
+        (PRIORITY_RANK[b.priority] ?? 0) - (PRIORITY_RANK[a.priority] ?? 0) ||
+        b.publishedAt.getTime() - a.publishedAt.getTime(),
+    );
     const acks = await db.announcementAck.findMany({
       where: { employeeId: auth.employee.id, announcementId: { in: announcements.map((a) => a.id) } },
     });
@@ -36,7 +47,7 @@ export async function GET() {
     return ok({
       items: announcements.map((a, i) => ({
         id: a.id, title: a.title, body: a.body, level: a.level, category: a.category,
-        priority: a.priority, requiresAck: a.requiresAck,
+        priority: a.priority, requiresAck: a.requiresAck, pinned: a.pinned,
         publishedAt: a.publishedAt.toISOString(),
         acked: acks.some((k) => k.announcementId === a.id),
         acknowledged: ackCounts[i] ?? 0,
@@ -65,15 +76,16 @@ export async function POST(req: Request) {
       }
       const companyId = auth.employee.companyId;
       if (!companyId) return badRequest("NO_COMPANY", "Your account is not linked to a company.");
-      const { title, body: text, level, category, priority, requiresAck } = parsed.data;
+      const { title, body: text, level, category, priority, requiresAck, pinned } = parsed.data;
       const created = await db.announcement.create({
-        data: { companyId, title, body: text, level, category, priority, requiresAck },
+        data: { companyId, title, body: text, level, category, priority, requiresAck, pinned },
       });
       await audit(auth.employee, "ANNOUNCEMENT_PUBLISHED", "Announcement", created.id, title);
       return ok({
         item: {
           id: created.id, title: created.title, body: created.body, level: created.level,
           category: created.category, priority: created.priority, requiresAck: created.requiresAck,
+          pinned: created.pinned,
           publishedAt: created.publishedAt.toISOString(), acked: false, acknowledged: 0,
         },
       });
@@ -92,6 +104,28 @@ export async function POST(req: Request) {
       await db.announcement.delete({ where: { id: announcement.id } });
       await audit(auth.employee, "ANNOUNCEMENT_DELETED", "Announcement", announcement.id, announcement.title);
       return ok({ deleted: true });
+    }
+
+    // ── pin / unpin: toggle top-of-feed placement (HR / Admin only) ──
+    if ((body?.action === "pin" || body?.action === "unpin") && typeof body?.id === "string") {
+      const role = auth.employee.role;
+      if (role !== "HR" && role !== "ADMIN") {
+        return forbidden("Only HR and Admin can pin announcements.");
+      }
+      const announcement = await db.announcement.findFirst({
+        where: { id: body.id, companyId: auth.employee.companyId ?? "" },
+      });
+      if (!announcement) return badRequest("NOT_FOUND", "Announcement not found.");
+      const pinned = body.action === "pin";
+      await db.announcement.update({ where: { id: announcement.id }, data: { pinned } });
+      await audit(
+        auth.employee,
+        pinned ? "ANNOUNCEMENT_PINNED" : "ANNOUNCEMENT_UNPINNED",
+        "Announcement",
+        announcement.id,
+        announcement.title,
+      );
+      return ok({ pinned });
     }
 
     if (body?.action === "ack" && typeof body?.id === "string") {

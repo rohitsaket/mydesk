@@ -16,7 +16,7 @@ import {
   Coffee, Gauge, Gift, Laptop, Megaphone, Plane, PlaneTakeoff, Receipt,
   Timer, TrendingUp, UserCheck, AlertTriangle, BriefcaseBusiness, FileClock,
   LifeBuoy, BadgeCheck, PartyPopper, CalendarClock, ClipboardCheck, BarChart3,
-  CircleAlert,
+  CircleAlert, Pin,
 } from "lucide-react";
 import type { ViewKey } from "@/lib/hrms/types";
 
@@ -444,10 +444,16 @@ export function AnnouncementsWidget({ data }: { data: DeskPayload }) {
       ) : (
         <ul className="space-y-2.5">
           {data.announcements.map((a) => (
-            <li key={a.id} className="rounded-lg border border-border p-3">
+            <li key={a.id} className={cn(
+              "rounded-lg border p-3",
+              a.pinned ? "border-primary/40 bg-primary/[0.05]" : "border-border",
+            )}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{a.title}</p>
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                    {a.pinned ? <Pin className="h-3 w-3 shrink-0 fill-primary text-primary" aria-label="Pinned" /> : null}
+                    <span className="min-w-0">{a.title}</span>
+                  </p>
                   <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{a.body}</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">

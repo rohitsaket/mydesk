@@ -150,7 +150,7 @@ export async function GET() {
     // ── announcements ──
     const announcements = await db.announcement.findMany({
       where: { companyId: emp.companyId ?? "" },
-      orderBy: { publishedAt: "desc" },
+      orderBy: [{ pinned: "desc" }, { publishedAt: "desc" }],
       take: 4,
     });
     const acks = await db.announcementAck.findMany({
@@ -358,7 +358,7 @@ export async function GET() {
       events: upcomingEvents,
       announcements: announcements.map((a) => ({
         id: a.id, title: a.title, body: a.body, level: a.level, category: a.category,
-        priority: a.priority, requiresAck: a.requiresAck,
+        priority: a.priority, requiresAck: a.requiresAck, pinned: a.pinned,
         publishedAt: a.publishedAt.toISOString(),
         acked: acks.some((ack) => ack.announcementId === a.id),
         acknowledged: 0,

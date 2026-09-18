@@ -424,3 +424,33 @@ Unresolved / Notes for next phase:
 - HR-1039's due time renders "12:00 am" (createdAt math lands at midnight IST) — factually correct but a more natural business-hour due time would need seed time adjustments; consider shifting if it bothers reviewers.
 - Assignee responses are seed-only (no agent simulation) — new tickets raised by users will realistically count down toward due; a future "simulate IT response" dev tool could demo MET live.
 - Ideas backlog: team drill-down dialogs, announcements pinning, payslip PDF logo embedding, weekly digest notification seed, resolution-SLA (needs resolvedAt column).
+---
+Task ID: 20 (webDevReview round 8)
+Agent: main (Z.ai Code)
+Task: Scheduled review — QA sweep (clean) + NEW announcements pinning system (schema + API + view + desk tie-in) + feed search + priority sort bug fix.
+
+Work Log:
+- QA sweep: server healthy (200), DB intact (26 users — round-5 fix holding through dev.sh restart), all 15 sidebar views render with 0 fresh console errors, mobile 390px zero overflow, round-6 desk banners + round-7 SLA chips all verified working. No bugs blocking → feature round.
+- GOTCHA (documented): after `bun run db:push` adds a column, the RUNNING dev server keeps the old Prisma client in memory → API 500 "Unknown argument `pinned`". Fix: restart dev server (.zscripts/dev.sh) after any schema push. Verified DB survives restart (26 users).
+- BUG FIX (pre-existing, found during round): announcements feed sorted by `priority: "desc"` — Prisma sorts the string alphabetically so NORMAL > IMPORTANT > CRITICAL, putting routine posts above CRITICAL policy updates. Fixed with in-memory PRIORITY_RANK sort (CRITICAL 3 / IMPORTANT 2 / NORMAL 1) after the fetch; verified order now pinned → CRITICAL → IMPORTANT → NORMAL.
+- NEW FEATURE — Announcement pinning (HR/Admin):
+  - Schema: Announcement.pinned Boolean @default(false) — purely additive push (round-5 guard intact), data survived.
+  - API /api/announcements: GET sorted pinned-first (SQL pinned desc + JS rank sort); new actions "pin"/"unpin" (RBAC 403 for others, company scoping, ANNOUNCEMENT_PINNED/UNPINNED audit rows — verified written then cleaned); compose accepts optional pinned (publish + pin in one step).
+  - View announcements-view.tsx: Pin/Unpin ghost buttons on every card (HR/Admin only, Pin/PinOff icons, aria-labels, tooltips, per-row pending spinners); pinned cards get a premium design system — primary border/bg tint, ring on icon chip, PINNED chip beside title, shadow, "Pinned · stays on top for everyone" gradient divider above the feed; header subtitle + footer counts show pin totals; compose dialog gains a primary-tinted "Pin to top" switch row.
+  - Desk tie-in: desk API orders pinned first + returns pinned flag; AnnouncementsWidget renders pinned items first with a filled Pin icon + primary border/tint card.
+  - Seed: showcase "Annual performance review cycle opens Monday" now pinned (seed.ts + surgical live-DB updateMany, no re-seed).
+- NEW FEATURE — Announcements feed search: pill search input (Search icon, clear X button, focus ring) filters by title+body client-side; footer shows matching "term"; no-match EmptyState quotes the term; verified filter → clear → empty-state → clear cycle.
+- E2E verified in browser (3 sessions): employee (Rohit) sees pinned-first + chip + divider + NO pin controls; RBAC API pin attempt as employee → 403 FORBIDDEN; HR (Payal) sees 5 pin buttons, unpin re-orders feed live + toast, re-pin restores, compose+pin publishes a pinned post that lands 2nd (IMPORTANT pinned outranks NORMAL pinned — rank sort proven), delete cleans up; desk widget shows pinned announcement first with pin icon.
+- VLM reviews: pinned-card design (first pass flagged "text clipping" — DISPROVEN via zoomed screenshot: line-clamp-3 renders "YES-ELLIPSIS" correctly; "cramped padding" also false — identical p-4); dark mode "production-ready, zero visual bugs"; mobile "Pass — no overflow, pinned distinct, adequate targets".
+- Regression: 11-view sweep 0 console errors, tsc 0 app errors, lint passes, mobile 390px zero overflow, dev.log clean.
+- Housekeeping: 4 test audit rows removed surgically; test announcement deleted via UI two-step confirm; README updated (Announcements bullet + Desk bullet).
+
+Stage Summary:
+- 22 views / 42 API route groups. Announcements module now complete: compose (round 3) + delete (round 3) + pinning (this round) + search (this round) + correct semantic priority ordering.
+- Pinning spans 3 surfaces: announcements feed (pinned-first + divider + chips), desk widget (pinned-first + icon), compose dialog (publish-then-pin).
+- GOTCHA for future agents: restart the dev server after prisma db:push — the running process caches the old client and will 500 on new fields.
+
+Unresolved / Notes for next phase:
+- Ideas backlog: team drill-down dialogs, payslip PDF logo embedding, weekly digest notification seed, resolution-SLA (needs resolvedAt column), announcements scheduled publishing (future publishedAt gating).
+- Pin state is global per company (by design); per-employee pin dismissals could be a future refinement.
+- widgetPrefs raw-SQL column migration fully resolved in round 5; no pending schema debt.

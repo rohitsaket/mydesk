@@ -580,6 +580,7 @@ model Announcement {
   category    String   @default("GENERAL") // GENERAL | POLICY | EVENT | HOLIDAY | BENEFITS
   priority    String   @default("NORMAL") // NORMAL | IMPORTANT | CRITICAL
   requiresAck Boolean  @default(false)
+  pinned      Boolean  @default(false) // HR/Admin can pin critical posts to the top of every feed
   publishedAt DateTime @default(now())
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   acks        AnnouncementAck[]

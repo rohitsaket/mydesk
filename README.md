@@ -69,11 +69,12 @@ bun run dev
 
 ## 🧭 Using the app
 
-- **Desk** — greeting + hero attendance card (punch in/out, breaks, live timer), summary cards, today's timeline, tasks widget, upcoming events, celebrations, announcements to acknowledge.
+- **Desk** — greeting + hero attendance card (punch in/out, breaks, live timer), summary cards, today's timeline, tasks widget, upcoming events, celebrations, announcements to acknowledge (pinned posts surface first with a 📌 marker).
 - **Attendance** — day timeline, punch history, regularization requests for missed punches.
 - **Requests** — leave (balances + apply), WFH, on-duty, each with status tracking.
 - **Tasks / Timesheet / Calendar / Notifications** — full module views.
 - **Payroll / Expenses / Documents / Helpdesk** — financial & service modules.
+- **Announcements** — searchable feed with category filters; HR/Admin can compose, **pin to top** (pinned posts lead every feed + desk widget), and delete with a full audit trail.
 - **Directory / Performance / Profile / Settings** — people modules.
 - **Team / Approvals** — manager-only command center.
 - **⌘K** — command palette anywhere; **quick-create (+)** in the top bar jumps straight into any module's form; **?** — keyboard shortcut cheatsheet; **g** then a key (e.g. `g p`) — jump straight to a module.

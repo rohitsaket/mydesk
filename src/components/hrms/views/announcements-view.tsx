@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Megaphone, BadgeCheck, CheckCircle2, RefreshCw, Loader2, Users, Building2,
-  Landmark, GraduationCap, CalendarHeart, Gift, BellRing, PenLine, Trash2, X, Sparkles,
+  Landmark, GraduationCap, CalendarHeart, Gift, BellRing, PenLine, Trash2, X, Sparkles, Pin, PinOff, Search,
 } from "lucide-react";
 import { apiGet, apiPost, ApiError } from "@/lib/hrms/client";
 import type { AnnouncementItem } from "@/lib/hrms/types";
@@ -45,16 +45,17 @@ const LEVEL_LABELS: Record<string, string> = {
 };
 
 type ComposeForm = {
-  title: string; body: string; level: string; category: string; priority: string; requiresAck: boolean;
+  title: string; body: string; level: string; category: string; priority: string; requiresAck: boolean; pinned: boolean;
 };
 
 const EMPTY_FORM: ComposeForm = {
-  title: "", body: "", level: "COMPANY", category: "GENERAL", priority: "NORMAL", requiresAck: false,
+  title: "", body: "", level: "COMPANY", category: "GENERAL", priority: "NORMAL", requiresAck: false, pinned: false,
 };
 
 export default function AnnouncementsView() {
   const queryClient = useQueryClient();
   const [category, setCategory] = useState<string>("ALL");
+  const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const employee = useHrmsStore((s) => s.employee);
   const canManage = employee?.role === "HR" || employee?.role === "ADMIN";
@@ -77,12 +78,16 @@ export default function AnnouncementsView() {
   }, [items]);
 
   const needsAckCount = items.filter((a) => a.requiresAck && !a.acked).length;
+  const pinnedCount = items.filter((a) => a.pinned).length;
 
   const filtered = useMemo(() => {
-    if (category === "ALL") return items;
-    if (category === "NEEDS_ACK") return items.filter((a) => a.requiresAck && !a.acked);
-    return items.filter((a) => a.category === category);
-  }, [items, category]);
+    const q = search.trim().toLowerCase();
+    let list = items;
+    if (category === "NEEDS_ACK") list = list.filter((a) => a.requiresAck && !a.acked);
+    else if (category !== "ALL") list = list.filter((a) => a.category === category);
+    if (q) list = list.filter((a) => a.title.toLowerCase().includes(q) || a.body.toLowerCase().includes(q));
+    return list;
+  }, [items, category, search]);
 
   const ackMutation = useMutation({
     mutationFn: (id: string) => apiPost<{ acked: boolean }>("/api/announcements", { action: "ack", id }),
@@ -93,6 +98,21 @@ export default function AnnouncementsView() {
     },
     onError: (err) => {
       toast.error(err instanceof ApiError ? err.message : "Could not record acknowledgement. Please retry.");
+    },
+  });
+
+  const pinMutation = useMutation({
+    mutationFn: ({ id, pinned }: { id: string; pinned: boolean }) =>
+      apiPost<{ pinned: boolean }>("/api/announcements", { action: pinned ? "pin" : "unpin", id }),
+    onSuccess: (_data, vars) => {
+      void queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      void queryClient.invalidateQueries({ queryKey: ["desk"] });
+      toast.success(vars.pinned ? "Pinned to top" : "Unpinned", {
+        description: vars.pinned ? "This announcement now stays first on every feed and desk." : "It will follow the regular priority order again.",
+      });
+    },
+    onError: (err) => {
+      toast.error(err instanceof ApiError ? err.message : "Could not update the pin. Please retry.");
     },
   });
 
@@ -131,7 +151,13 @@ export default function AnnouncementsView() {
       <PageHeader
         icon={<Megaphone className="h-5 w-5" />}
         title="Announcements"
-        subtitle={needsAckCount > 0 ? `${needsAckCount} announcement${needsAckCount > 1 ? "s" : ""} need your acknowledgement` : "Company news, policies and events"}
+        subtitle={
+          needsAckCount > 0
+            ? `${needsAckCount} announcement${needsAckCount > 1 ? "s" : ""} need${needsAckCount > 1 ? "" : "s"} your acknowledgement${pinnedCount > 0 ? ` · ${pinnedCount} pinned` : ""}`
+            : pinnedCount > 0
+              ? `Company news, policies and events · ${pinnedCount} pinned`
+              : "Company news, policies and events"
+        }
         actions={
           <div className="flex items-center gap-2">
             {canManage ? (
@@ -156,17 +182,39 @@ export default function AnnouncementsView() {
           />
         ) : (
           <div className="space-y-3">
-            {/* filter chips */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <FilterChip active={category === "ALL"} onClick={() => setCategory("ALL")}>
-                All <span className="ml-1 opacity-60">{items.length}</span>
-              </FilterChip>
-              {needsAckCount > 0 ? (
-                <FilterChip active={category === "NEEDS_ACK"} onClick={() => setCategory("NEEDS_ACK")} accent>
-                  <BellRing className="mr-1 h-3 w-3" /> Needs your ack <span className="ml-1 opacity-70">{needsAckCount}</span>
+            {/* search + filter chips */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[11rem] flex-1 sm:max-w-xs">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search announcements…"
+                  aria-label="Search announcements by title or text"
+                  className="h-8 w-full rounded-full border border-border bg-card pl-8 pr-8 text-xs text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary/50"
+                />
+                {search ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <FilterChip active={category === "ALL"} onClick={() => setCategory("ALL")}>
+                  All <span className="ml-1 opacity-60">{items.length}</span>
                 </FilterChip>
-              ) : null}
-              {categories.map(([cat, count]) => {
+                {needsAckCount > 0 ? (
+                  <FilterChip active={category === "NEEDS_ACK"} onClick={() => setCategory("NEEDS_ACK")} accent>
+                    <BellRing className="mr-1 h-3 w-3" /> Needs your ack <span className="ml-1 opacity-70">{needsAckCount}</span>
+                  </FilterChip>
+                ) : null}
+                {categories.map(([cat, count]) => {
                 const meta = CATEGORY_META[cat] ?? { label: cat.toLowerCase(), icon: Megaphone };
                 return (
                   <FilterChip key={cat} active={category === cat} onClick={() => setCategory(cat)}>
@@ -174,13 +222,22 @@ export default function AnnouncementsView() {
                   </FilterChip>
                 );
               })}
+              </div>
             </div>
 
             {/* feed */}
             {filtered.length === 0 ? (
-              <EmptyState title="Nothing here" message="No announcements match this filter." />
+              <EmptyState title="Nothing here" message={search ? `No announcements match "${search.trim()}".` : "No announcements match this filter."} />
             ) : (
               <div className="max-h-[calc(100vh-21rem)] space-y-3 overflow-y-auto scroll-thin pr-0.5">
+                {pinnedCount > 0 && category === "ALL" ? (
+                  <div className="flex items-center gap-2 pt-1" aria-label={`${pinnedCount} pinned announcement${pinnedCount > 1 ? "s" : ""}`}>
+                    <Pin className="h-3 w-3 fill-primary text-primary" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">Pinned</span>
+                    <span className="text-[11px] text-muted-foreground">· stays on top for everyone</span>
+                    <span className="h-px flex-1 bg-gradient-to-r from-primary/30 to-transparent" />
+                  </div>
+                ) : null}
                 {filtered.map((a, i) => {
                   const meta = CATEGORY_META[a.category] ?? { label: a.category.toLowerCase(), icon: Megaphone };
                   const CatIcon = meta.icon;
@@ -190,27 +247,39 @@ export default function AnnouncementsView() {
                     <article
                       key={a.id}
                       className={cn(
-                        "group rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/30",
+                        "group rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-sm",
                         RISE,
                         a.priority === "CRITICAL" && "border-l-4 border-l-[var(--danger)]",
                         a.priority === "IMPORTANT" && "border-l-4 border-l-[var(--warning)]",
                         a.priority === "NORMAL" && "border-l-4 border-l-transparent",
-                        needsAck && "bg-[var(--warning-soft)]/30",
+                        a.pinned
+                          ? "border-primary/40 bg-primary/[0.05] shadow-sm hover:border-primary/50"
+                          : "hover:-translate-y-px",
+                        needsAck && !a.pinned && "bg-[var(--warning-soft)]/30",
                       )}
                       style={{ animationDelay: `${Math.min(i, 8) * 60}ms` }}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-start gap-3">
                           <span className={cn(
-                            "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                            a.priority === "CRITICAL" ? "bg-[var(--danger-soft)] text-[var(--danger)]"
+                            "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors",
+                            a.pinned
+                              ? "bg-primary/15 text-primary ring-1 ring-primary/20"
+                              : a.priority === "CRITICAL" ? "bg-[var(--danger-soft)] text-[var(--danger)]"
                               : a.priority === "IMPORTANT" ? "bg-[var(--warning-soft)] text-[#B54708]"
                               : "bg-primary/10 text-primary",
                           )}>
                             <CatIcon className="h-4.5 w-4.5" />
                           </span>
                           <div className="min-w-0">
-                            <h2 className="text-sm font-semibold leading-snug text-foreground">{a.title}</h2>
+                            <h2 className="flex flex-wrap items-center gap-1.5 text-sm font-semibold leading-snug text-foreground">
+                              <span className="min-w-0">{a.title}</span>
+                              {a.pinned ? (
+                                <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-primary" title="Pinned by HR — stays on top">
+                                  <Pin className="h-2.5 w-2.5 fill-primary" /> Pinned
+                                </span>
+                              ) : null}
+                            </h2>
                             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
                               <span className="inline-flex items-center gap-1">
                                 {a.level === "COMPANY" ? <Building2 className="h-3 w-3" /> : a.level === "BRANCH" ? <Landmark className="h-3 w-3" /> : <Users className="h-3 w-3" />}
@@ -251,6 +320,26 @@ export default function AnnouncementsView() {
                           ) : "For your information"}
                         </span>
                         <div className="flex items-center gap-1.5">
+                          {canManage ? (
+                            <Button
+                              size="sm" variant="ghost"
+                              className={cn(
+                                "h-7 gap-1 px-2 text-xs",
+                                a.pinned ? "text-primary hover:text-primary" : "text-muted-foreground hover:text-primary",
+                              )}
+                              disabled={pinMutation.isPending && pinMutation.variables?.id === a.id}
+                              onClick={() => pinMutation.mutate({ id: a.id, pinned: !a.pinned })}
+                              aria-label={a.pinned ? `Unpin announcement ${a.title}` : `Pin announcement ${a.title} to top`}
+                              title={a.pinned ? "Unpin — return to regular order" : "Pin to top of every feed"}
+                            >
+                              {pinMutation.isPending && pinMutation.variables?.id === a.id
+                                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                : a.pinned
+                                  ? <PinOff className="h-3.5 w-3.5" />
+                                  : <Pin className="h-3.5 w-3.5" />}
+                              {a.pinned ? "Unpin" : "Pin"}
+                            </Button>
+                          ) : null}
                           {confirmDelete === a.id ? (
                             <>
                               <span className="text-[11px] font-medium text-muted-foreground">Remove this?</span>
@@ -305,7 +394,7 @@ export default function AnnouncementsView() {
 
             {/* footer meta */}
             <p className="text-center text-[11px] text-muted-foreground">
-              Showing {filtered.length} of {items.length} announcements · published by HR & Admin
+              Showing {filtered.length} of {items.length} announcements{pinnedCount > 0 && !search ? ` · ${pinnedCount} pinned` : ""}{search ? ` · matching "${search.trim()}"` : ""} · published by HR & Admin
             </p>
           </div>
         ))}
@@ -414,6 +503,19 @@ export default function AnnouncementsView() {
               <Switch
                 id="ann-ack" checked={form.requiresAck}
                 onCheckedChange={(v) => setForm((f) => ({ ...f, requiresAck: v }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between rounded-lg border border-primary/25 bg-primary/[0.06] px-3 py-2.5">
+              <div className="space-y-0.5">
+                <Label htmlFor="ann-pin" className="flex items-center gap-1.5 text-xs">
+                  <Pin className="h-3 w-3" /> Pin to top
+                </Label>
+                <p className="text-[11px] text-muted-foreground">Keeps this post first on every employee's feed and desk.</p>
+              </div>
+              <Switch
+                id="ann-pin" checked={form.pinned}
+                onCheckedChange={(v) => setForm((f) => ({ ...f, pinned: v }))}
               />
             </div>
           </div>

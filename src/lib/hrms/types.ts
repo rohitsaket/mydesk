@@ -177,6 +177,7 @@ export interface AnnouncementItem {
   category: string;
   priority: string;
   requiresAck: boolean;
+  pinned: boolean;
   publishedAt: string;
   acked: boolean;
   acknowledged: number;
