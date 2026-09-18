@@ -632,17 +632,19 @@ async function main() {
 
   // ── documents ───────────────────────────────────────────────
   const docs = [
-    { name: "Appointment Letter — Rohit Patel", cat: "APPOINTMENT", conf: "SENSITIVE", kb: 184 },
-    { name: "Offer Letter — NISS Technologies", cat: "OFFER", conf: "SENSITIVE", kb: 156 },
-    { name: "Employee ID Card (Digital)", cat: "ID", conf: "NORMAL", kb: 220 },
-    { name: "Salary Revision Letter 2026", cat: "SALARY_REVISION", conf: "SENSITIVE", kb: 132 },
-    { name: "Form 16 — FY 2025-26", cat: "TAX", conf: "SENSITIVE", kb: 412 },
-    { name: "Experience Certificate", cat: "CERTIFICATE", conf: "NORMAL", kb: 98 },
-    { name: "Code of Conduct Policy", cat: "POLICY", conf: "NORMAL", kb: 640 },
-    { name: "Information Security Policy", cat: "POLICY", conf: "NORMAL", kb: 720 },
+    { name: "Appointment Letter — Rohit Patel", cat: "APPOINTMENT", conf: "SENSITIVE", kb: 184, exp: null as number | null },
+    { name: "Offer Letter — NISS Technologies", cat: "OFFER", conf: "SENSITIVE", kb: 156, exp: null },
+    { name: "Employee ID Card (Digital)", cat: "ID", conf: "NORMAL", kb: 220, exp: 24 }, // expires in 24 days → amber alert
+    { name: "Salary Revision Letter 2026", cat: "SALARY_REVISION", conf: "SENSITIVE", kb: 132, exp: null },
+    { name: "Form 16 — FY 2025-26", cat: "TAX", conf: "SENSITIVE", kb: 412, exp: null },
+    { name: "Experience Certificate", cat: "CERTIFICATE", conf: "NORMAL", kb: 98, exp: null },
+    { name: "Code of Conduct Policy", cat: "POLICY", conf: "NORMAL", kb: 640, exp: null },
+    { name: "Information Security Policy", cat: "POLICY", conf: "NORMAL", kb: 720, exp: null },
+    { name: "Group Mediclaim Policy Card", cat: "CERTIFICATE", conf: "NORMAL", kb: 88, exp: -12, uploadedDaysAgo: 370 }, // expired 12 days ago → red alert (issued over a year back)
+    { name: "Passport Scan (Front Page)", cat: "ID", conf: "SENSITIVE", kb: 310, exp: 420, uploadedDaysAgo: 200 }, // valid for over a year
   ];
   for (const d of docs) {
-    await db.document.create({ data: { employeeId: rohitId, name: d.name, category: d.cat, fileExt: "pdf", sizeKb: d.kb, confidentiality: d.conf, uploadedAt: addDays(today, -ri(10, 300)) } });
+    await db.document.create({ data: { employeeId: rohitId, name: d.name, category: d.cat, fileExt: "pdf", sizeKb: d.kb, confidentiality: d.conf, uploadedAt: addDays(today, -(d.uploadedDaysAgo ?? ri(10, 300))), expiresAt: d.exp === null ? null : addDays(today, d.exp) } });
   }
   await db.document.create({ data: { employeeId: null, name: "Leave Policy 2026", category: "POLICY", fileExt: "pdf", sizeKb: 320, sharedWithTeam: true, uploadedAt: addDays(today, -60) } });
   await db.document.create({ data: { employeeId: null, name: "Working Hours & Overtime Policy", category: "POLICY", fileExt: "pdf", sizeKb: 280, sharedWithTeam: true, uploadedAt: addDays(today, -90) } });

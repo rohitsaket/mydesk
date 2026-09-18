@@ -18,10 +18,16 @@ import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 import {
   FolderOpen, Search, Lock, Download, FileText, FileImage, FileSpreadsheet,
-  FileType, File, Globe, ShieldCheck, ScrollText,
+  FileType, File, Globe, ShieldCheck, ScrollText, TriangleAlert, CircleAlert, CalendarClock,
 } from "lucide-react";
 
 // ── types (API contract) ─────────────────────────────────────
+interface DocExpiry {
+  status: "valid" | "expiring" | "expired";
+  daysLeft: number;
+  date: string;
+}
+
 interface DocItem {
   id: string;
   name: string;
@@ -31,10 +37,12 @@ interface DocItem {
   confidentiality: string;
   shared: boolean;
   uploadedAt: string;
+  expiry: DocExpiry | null;
 }
 
 interface DocumentsPayload {
   items: DocItem[];
+  summary: { total: number; withExpiry: number; expiring: number; expired: number };
 }
 
 // ── constants ────────────────────────────────────────────────
@@ -83,24 +91,70 @@ function fmtSize(sizeKb: number): string {
   return sizeKb >= 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${sizeKb} KB`;
 }
 
+// ── expiry presentation helpers ──────────────────────────────
+function expiryLabel(e: DocExpiry): string {
+  if (e.status === "expired") {
+    const d = Math.abs(e.daysLeft);
+    return d === 0 ? "Expired today" : `Expired ${d} day${d === 1 ? "" : "s"} ago`;
+  }
+  if (e.status === "expiring") {
+    return e.daysLeft === 0 ? "Expires today" : `Expires in ${e.daysLeft} day${e.daysLeft === 1 ? "" : "s"}`;
+  }
+  return e.daysLeft > 60 ? `Valid · ${Math.round(e.daysLeft / 30)} months` : `Valid · ${e.daysLeft} days`;
+}
+
+const EXPIRY_STYLES: Record<DocExpiry["status"], string> = {
+  expired: "border-danger/25 bg-danger-soft text-danger",
+  expiring: "border-[#B54708]/25 bg-[#FEF3C7] text-[#B54708] dark:bg-warning/15 dark:text-[#F5B340]",
+  valid: "border-border bg-muted text-muted-foreground",
+};
+
+function ExpiryBadge({ expiry, showValid = false }: { expiry: DocExpiry; showValid?: boolean }) {
+  if (expiry.status === "valid" && !showValid) return null;
+  const Icon = expiry.status === "expired" ? CircleAlert : expiry.status === "expiring" ? TriangleAlert : CalendarClock;
+  return (
+    <span
+      className={cn("inline-flex items-center gap-1 rounded-md border px-1.5 py-0 text-[11px] font-medium", EXPIRY_STYLES[expiry.status])}
+      title={`Expiry date: ${fmtDate(expiry.date)}`}
+    >
+      <Icon className="h-3 w-3" aria-hidden />
+      {expiryLabel(expiry)}
+    </span>
+  );
+}
+
+/** Sort urgency: expired → expiring → everything else by recency. */
+function urgencyRank(d: DocItem): number {
+  if (!d.expiry) return 2;
+  if (d.expiry.status === "expired") return 0;
+  if (d.expiry.status === "expiring") return 1;
+  return 2;
+}
+
 // ── main view ────────────────────────────────────────────────
 export default function DocumentsView() {
   const [category, setCategory] = useState<string>("ALL");
   const [search, setSearch] = useState("");
+  const [attentionOnly, setAttentionOnly] = useState(false);
   const [selected, setSelected] = useState<DocItem | null>(null);
 
   const query = useQuery({ queryKey: ["documents"], queryFn: () => apiGet<DocumentsPayload>("/api/documents") });
 
   const own = useMemo(() => (query.data?.items ?? []).filter((d) => !d.shared), [query.data]);
   const shared = useMemo(() => (query.data?.items ?? []).filter((d) => d.shared), [query.data]);
+  const summary = query.data?.summary;
+  const needsAttention = (summary?.expired ?? 0) + (summary?.expiring ?? 0);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return own.filter((d) =>
-      (category === "ALL" || d.category === category) &&
-      (q === "" || d.name.toLowerCase().includes(q))
-    );
-  }, [own, category, search]);
+    return own
+      .filter((d) =>
+        (category === "ALL" || d.category === category) &&
+        (!attentionOnly || d.expiry?.status === "expired" || d.expiry?.status === "expiring") &&
+        (q === "" || d.name.toLowerCase().includes(q))
+      )
+      .toSorted((a, b) => urgencyRank(a) - urgencyRank(b) || b.uploadedAt.localeCompare(a.uploadedAt));
+  }, [own, category, search, attentionOnly]);
 
   return (
     <div className="space-y-4">
@@ -109,6 +163,46 @@ export default function DocumentsView() {
       <DataState query={query} skeleton={<DataSkeleton />}>
         {() => (
           <>
+            {/* expiry alerts strip */}
+            {needsAttention > 0 ? (
+              <button
+                type="button"
+                onClick={() => setAttentionOnly((v) => !v)}
+                aria-pressed={attentionOnly}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all focus-ring",
+                  attentionOnly
+                    ? "border-primary/40 bg-primary/5 shadow-sm"
+                    : "border-amber-300/50 bg-[#FFFBEB] hover:shadow-sm dark:border-warning/30 dark:bg-warning/10"
+                )}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FEF3C7] text-[#B54708] dark:bg-warning/20 dark:text-[#F5B340]">
+                  <TriangleAlert className="h-4.5 w-4.5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-foreground">
+                    {summary && summary.expired > 0
+                      ? `${summary.expired} document${summary.expired === 1 ? "" : "s"} expired · ${summary.expiring} expiring soon`
+                      : `${summary?.expiring ?? 0} document${summary?.expiring === 1 ? "" : "s"} expiring soon`}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {attentionOnly ? "Showing documents that need attention — click again to show all" : "Review and renew before they lapse — click to filter"}
+                  </span>
+                </span>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "shrink-0 gap-1 px-2 py-0 text-[11px] font-semibold",
+                    attentionOnly
+                      ? "border-primary/30 bg-primary/10 text-primary"
+                      : "border-[#B54708]/25 bg-[#FEF3C7] text-[#B54708] dark:bg-warning/20 dark:text-[#F5B340]"
+                  )}
+                >
+                  {attentionOnly ? "Filter on" : `${needsAttention} to review`}
+                </Badge>
+              </button>
+            ) : null}
+
             {/* filters */}
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
               <div className="relative flex-1">
@@ -145,8 +239,10 @@ export default function DocumentsView() {
             {/* grid */}
             {filtered.length === 0 ? (
               <EmptyState
-                title="No documents found"
-                message={search ? "Try a different search term or category." : "Your HR documents will appear here once issued."}
+                title={attentionOnly ? "No documents need attention" : "No documents found"}
+                message={attentionOnly
+                  ? "Expiring and expired documents will surface here. Everything else is valid."
+                  : search ? "Try a different search term or category." : "Your HR documents will appear here once issued."}
               />
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -197,9 +293,20 @@ function DocCard({ doc, onClick }: { doc: DocItem; onClick: () => void }) {
   const meta = extMeta(doc.fileExt);
   const Icon = meta.icon;
   const sensitive = doc.confidentiality === "SENSITIVE";
+  const urgent = doc.expiry?.status === "expired";
+  const warn = doc.expiry?.status === "expiring";
 
   return (
-    <Card className="shadow-none transition-colors hover:border-primary/40">
+    <Card
+      className={cn(
+        "group shadow-none transition-all duration-200 hover:-translate-y-px hover:shadow-md",
+        urgent
+          ? "border-danger/30 hover:border-danger/45"
+          : warn
+            ? "border-amber-300/60 hover:border-amber-400/70 dark:border-warning/40"
+            : "hover:border-primary/40"
+      )}
+    >
       <CardContent className="p-3.5">
         <button className="w-full text-left" onClick={onClick}>
           <div className="flex items-start gap-3">
@@ -219,6 +326,7 @@ function DocCard({ doc, onClick }: { doc: DocItem; onClick: () => void }) {
             </div>
           </div>
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            {doc.expiry ? <ExpiryBadge expiry={doc.expiry} /> : null}
             {sensitive ? (
               <span className="inline-flex items-center gap-1 rounded-md border border-danger/20 bg-danger-soft px-1.5 py-0 text-[11px] font-medium text-danger">
                 <Lock className="h-3 w-3" /> Sensitive
@@ -266,9 +374,42 @@ function DocumentDialog({ doc, onClose }: { doc: DocItem; onClose: () => void })
 
         <div className="space-y-0.5">
           <InfoRow label="Uploaded" value={fmtDate(doc.uploadedAt)} />
+          {doc.expiry ? (
+            <InfoRow
+              label="Expires"
+              value={
+                <span className="inline-flex items-center gap-2">
+                  {fmtDate(doc.expiry.date)}
+                  <ExpiryBadge expiry={doc.expiry} showValid />
+                </span>
+              }
+            />
+          ) : null}
           <InfoRow label="Confidentiality" value={sensitive ? "Sensitive" : "Normal"} />
           <InfoRow label="Shared" value={doc.shared ? "Company-wide" : "Private to you"} />
         </div>
+
+        {doc.expiry && doc.expiry.status !== "valid" ? (
+          <div
+            className={cn(
+              "flex items-start gap-2 rounded-lg border px-3 py-2 text-xs font-medium",
+              doc.expiry.status === "expired"
+                ? "border-danger/25 bg-danger-soft text-[#A32424] dark:text-[#F87171]"
+                : "border-[#B54708]/20 bg-[#FEF3C7] text-[#92400E] dark:border-warning/30 dark:bg-warning/15 dark:text-[#F5B340]"
+            )}
+          >
+            {doc.expiry.status === "expired" ? (
+              <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>
+              {doc.expiry.status === "expired"
+                ? "This document has expired. Raise a helpdesk ticket to HR to get it reissued."
+                : "This document expires soon. Renew it with HR before the deadline to avoid gaps."}
+            </span>
+          </div>
+        ) : null}
 
         {sensitive ? (
           <div className="flex items-start gap-2 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">

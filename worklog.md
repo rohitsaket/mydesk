@@ -330,3 +330,37 @@ Unresolved / Notes for next phase:
 - widgetPrefs raw-SQL column migration still pending (low priority).
 - PDF payslip could add company logo image embedding (pdf-lib embedPng) if a logo asset is ever produced.
 - Possible next features: announcements pinning/scheduling, helpdesk SLA timers, team drill-down dialogs.
+---
+Task ID: 17 (webDevReview round 5)
+Agent: main (Z.ai Code)
+Task: Scheduled review — CRITICAL FIX: dev-restart DB wipe (schema drift) + re-seed + NEW Documents expiry alerts + a11y fix.
+
+Work Log:
+- QA found the app BROKEN: login 401 for every account. Root cause: database completely empty (0 users/employees, tables intact). Timeline: DB file mtime 14:56 matched a fresh dev.sh start in dev.log.
+- ROOT CAUSE: .zscripts/dev.sh runs `bun run db:push` → `prisma db push --accept-data-loss` on EVERY dev-server start. The Employee.widgetPrefs column (added by raw SQL in an earlier round, unknown to schema.prisma) created schema drift → Prisma recreated the drifted tables → --accept-data-loss silently wiped ALL data. Any dev restart could nuke the DB.
+- FIX (root cause, 3 layers):
+  1. schema.prisma: Employee.widgetPrefs String? (JSON) now schema-managed + Document.expiresAt DateTime? added — pushes are purely additive forever.
+  2. package.json: db:push no longer passes --accept-data-loss (added db:push:force alias for explicit manual use) — future drift fails LOUDLY in dev.log instead of silently wiping.
+  3. settings route rewritten: raw SQL (ensurePrefsColumn/readPrefs/writePrefs) replaced by parsePrefs() + plain db.employee.update({ data: { widgetPrefs } }) — no more raw-schema mutations from app code.
+- RESTORE: bun run db:push (additive, 41ms) + bun run db:seed — 26 users/employees back; login works. VERIFIED the fix live: restarted the dev server via dev.sh (which runs db:push) → data survived (26 users intact, widgetPrefs column present).
+- QA re-run of settings notifPrefs through the new Prisma path: PATCH notifWeekly true → response + DB Employee.widgetPrefs JSON persisted → revert OK.
+- NEW FEATURE — Documents expiry alerts:
+  - Schema: Document.expiresAt (optional). Seed: Employee ID Card expires in 24d (amber), Group Mediclaim Policy Card expired 12d ago (red, uploaded 370d ago — annual policy narrative), Passport Scan valid 420d.
+  - API /api/documents: returns expiry {status: valid|expiring|expired, daysLeft, date} per doc (30-day warn window, server-computed) + summary {total, withExpiry, expiring, expired}.
+  - View documents-view.tsx: amber alerts strip (counts + one-click attention filter, aria-pressed, toggles styling), urgency-sorted grid (expired → expiring → recent), ExpiryBadge chips (red/amber with icons + title tooltip), cards get danger/warning border tints + hover lift, dialog shows "Expires" InfoRow with full badge + contextual renewal/reissue guidance alert (darker contrast per VLM feedback), EmptyState variant when filter on.
+- STYLING: card hover lift/borders in documents grid; expiry color system (danger red / #B54708 amber light + warning-token dark mode variants).
+- A11Y: bottom-nav More sheet was missing a description (Radix DialogContent warning) — added sr-only SheetDescription; verified 0 fresh warnings via console.warn interceptor.
+- VLM reviews: documents view "No real defects found; layout clean, text readable"; expired + expiring dialogs "no visual defects". Initial VLM pass flagged mediclaim uploaded-after-expiry confusion (fixed: upload date now 370d ago, coherent annual policy) + alert contrast (fixed with darker tones).
+- Regression: desk/insights (5 charts)/payroll PDF (36KB valid)/announcements (5, long showcase present)/settings all pass; mobile 390px documents view zero overflow; console clean; tsc 0 app errors; lint passes.
+- Housekeeping: git config core.fileMode false (sandbox chmod +x noise on unrelated files would pollute commits).
+- Committed + pushed to github.com/rohitsaket/mydesk.
+
+Stage Summary:
+- CRITICAL DATA-WIPE BUG FIXED AND VERIFIED (schema aligned, flag removed, raw SQL eliminated, live restart test passed).
+- 22 views / 42 API route groups. Documents module gains expiry lifecycle (alerts, filtering, urgency sort, renewal guidance).
+- CONVENTION (critical for all future agents): NEVER ALTER DB SHAPE VIA RAW SQL — add columns to prisma/schema.prisma (SQLite-friendly: String for JSON, DateTime? for optional dates). dev.sh runs db:push on every restart; drift + old --accept-data-loss flag caused the round-5 wipe.
+
+Unresolved / Notes for next phase:
+- If DB is ever wiped again: bun run db:seed restores in ~30s (all demo state incl. round-3 showcase announcement).
+- Documents expiry could feed a desk widget or notification (e.g., "ID card expires in 24 days" notification in seed) — natural next enhancement.
+- Ideas backlog: team drill-down dialogs, helpdesk SLA timers, announcements pinning, payslip PDF logo embedding.

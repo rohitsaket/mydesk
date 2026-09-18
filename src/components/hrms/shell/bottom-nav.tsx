@@ -3,7 +3,7 @@
 import { useHrmsStore } from "@/lib/hrms/store";
 import { MOBILE_NAV, MAIN_NAV, MANAGER_NAV } from "./nav-config";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 
@@ -47,6 +47,7 @@ export function BottomNav() {
           <SheetContent side="bottom" className="h-[70vh] px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
             <SheetHeader className="px-0">
               <SheetTitle className="text-left text-base">All modules</SheetTitle>
+              <SheetDescription className="sr-only">Jump to any workspace module</SheetDescription>
             </SheetHeader>
             <div className="mt-2 grid grid-cols-2 gap-1.5 overflow-y-auto scroll-thin">
               {moreItems.map((item) => (

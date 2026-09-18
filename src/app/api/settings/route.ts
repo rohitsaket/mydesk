@@ -1,5 +1,4 @@
 import { cookies } from "next/headers";
-import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
   getAuth, ok, unauthorized, badRequest, serverError, audit,
@@ -29,24 +28,13 @@ const patchSchema = z.object({
 });
 
 // ── widget prefs storage ─────────────────────────────────────
-// Notification / widget preferences live in a `widgetPrefs` JSON column that is
-// managed with raw SQL alongside the Prisma-managed Employee columns (Prisma
-// ignores extra columns, so this needs no schema change).
-async function ensurePrefsColumn(): Promise<void> {
-  try {
-    await db.$executeRawUnsafe(`ALTER TABLE Employee ADD COLUMN widgetPrefs TEXT`);
-  } catch {
-    // column already exists (or table altered concurrently) — safe to ignore
-  }
-}
-
-async function readPrefs(employeeId: string): Promise<NotifPrefs> {
-  try {
-    const rows = await db.$queryRaw<{ widgetPrefs: string | null }[]>(
-      Prisma.sql`SELECT widgetPrefs FROM Employee WHERE id = ${employeeId}`
-    );
-    const raw = rows[0]?.widgetPrefs;
-    if (raw) {
+// Notification / widget preferences live in the schema-managed Employee.widgetPrefs
+// JSON column. (Previously raw SQL — that drift made `prisma db push` recreate the
+// Employee table on dev-server restarts, wiping data; the column is now in
+// schema.prisma so pushes stay additive forever.)
+function parsePrefs(raw: string | null | undefined): NotifPrefs {
+  if (raw) {
+    try {
       const parsed: unknown = JSON.parse(raw);
       if (typeof parsed === "object" && parsed !== null) {
         const p = parsed as Record<string, unknown>;
@@ -56,25 +44,15 @@ async function readPrefs(employeeId: string): Promise<NotifPrefs> {
           notifWeekly: typeof p.notifWeekly === "boolean" ? p.notifWeekly : DEFAULT_PREFS.notifWeekly,
         };
       }
+    } catch {
+      // corrupted JSON — fall through to defaults
     }
-  } catch {
-    // column missing yet — defaults
   }
   return { ...DEFAULT_PREFS };
 }
 
-async function writePrefs(employeeId: string, prefs: NotifPrefs): Promise<void> {
-  await ensurePrefsColumn();
-  await db.$executeRaw(
-    Prisma.sql`UPDATE Employee SET widgetPrefs = ${JSON.stringify(prefs)} WHERE id = ${employeeId}`
-  );
-}
-
 async function buildSettings(employeeId: string, userId: string) {
-  const [emp, prefs] = await Promise.all([
-    db.employee.findUnique({ where: { id: employeeId } }),
-    readPrefs(employeeId),
-  ]);
+  const emp = await db.employee.findUnique({ where: { id: employeeId } });
   const now = new Date();
   const sessions = await db.session.findMany({
     where: { userId, expiresAt: { gt: now } },
@@ -89,7 +67,7 @@ async function buildSettings(employeeId: string, userId: string) {
     theme: emp?.theme ?? "system",
     timeFormat: emp?.timeFormat ?? "12h",
     dateOfBirthPublic: emp?.dateOfBirthPublic ?? true,
-    notifPrefs: prefs,
+    notifPrefs: parsePrefs(emp?.widgetPrefs),
     sessions: sessions.map((s) => ({
       id: s.id.slice(0, 8),
       createdAt: s.createdAt.toISOString(),
@@ -125,17 +103,17 @@ export async function PATCH(req: Request) {
     }
 
     const { theme, timeFormat, dateOfBirthPublic, notifPrefs } = parsed.data;
-    const data: { theme?: string; timeFormat?: string; dateOfBirthPublic?: boolean } = {};
+    const data: { theme?: string; timeFormat?: string; dateOfBirthPublic?: boolean; widgetPrefs?: string } = {};
     if (theme !== undefined) data.theme = theme;
     if (timeFormat !== undefined) data.timeFormat = timeFormat;
     if (dateOfBirthPublic !== undefined) data.dateOfBirthPublic = dateOfBirthPublic;
-    if (Object.keys(data).length > 0) {
-      await db.employee.update({ where: { id: emp.id }, data });
-    }
 
     if (notifPrefs) {
-      const existing = await readPrefs(emp.id);
-      await writePrefs(emp.id, { ...existing, ...notifPrefs });
+      const existing = parsePrefs(emp.widgetPrefs);
+      data.widgetPrefs = JSON.stringify({ ...existing, ...notifPrefs });
+    }
+    if (Object.keys(data).length > 0) {
+      await db.employee.update({ where: { id: emp.id }, data });
     }
 
     const changed = [

@@ -18,6 +18,7 @@ Built with **Next.js 16 (App Router) · TypeScript · Tailwind CSS 4 · shadcn/u
 | **Timesheets** | Weekly grid, draft → submit → approve/reject, billable split, per-project rollups |
 | **Payroll** | Payroll periods, full payslip breakdown (earnings/deductions/OT/LOP), payslip dialog, branded **PDF payslip export** (₹ formatting, amount in words, one-click from dialog/history) |
 | **Expenses** | Category claims with receipt metadata, Manager → Finance → Paid lifecycle |
+| **Documents** | Personal + company-wide document vault with confidentiality levels and **expiry alerts** (expired/expiring-soon banners, urgency sort, renewal guidance) |
 | **Calendar** | Month grid merging meetings, trainings, company events, holidays, leaves, task due dates, payroll days, birthdays & anniversaries |
 | **Helpdesk** | HR/IT/Facilities/Payroll/Admin tickets with priorities and comment threads |
 | **Performance** | Quarterly goals with progress tracking, auto-completion at target, self-review |

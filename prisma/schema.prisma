@@ -101,6 +101,7 @@ model Employee {
   theme          String   @default("system")  // light | dark | system
   timeFormat     String   @default("12h")     // 12h | 24h
   dateOfBirthPublic Boolean @default(true)
+  widgetPrefs    String?  // JSON: notification/widget preferences (schema-managed so db push never drifts)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -521,6 +522,7 @@ model Document {
   confidentiality String   @default("NORMAL") // NORMAL | SENSITIVE
   sharedWithTeam  Boolean  @default(false)
   uploadedAt      DateTime @default(now())
+  expiresAt       DateTime? // optional expiry (ID cards, insurance, passport scans…)
 
   employee Employee? @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
